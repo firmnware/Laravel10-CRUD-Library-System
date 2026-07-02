@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Book;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class DatabaseSeeder extends Seeder
 {
@@ -77,9 +78,23 @@ class DatabaseSeeder extends Seeder
             Category::create($cat);
         }
 
-        // ========== BUAT BUKU (3-5 Buku per Kategori) ==========
+        // ========== FUNGSI UNTUK CEK GAMBAR ==========
+        function getCoverPath($filename)
+        {
+            // Cek di folder public/storage/covers/
+            $path = 'covers/' . $filename;
+            
+            // Jika file tidak ada, return null
+            if (!Storage::disk('public')->exists($path)) {
+                return null;
+            }
+            
+            return $path;
+        }
+
+        // ========== BUAT BUKU DENGAN GAMBAR ==========
         $books = [
-            // 1. Fiksi (5 buku)
+            // ===== 1. Fiksi (5 buku) =====
             [
                 'title' => 'Dunia Sophie',
                 'author' => 'Jostein Gaarder',
@@ -88,6 +103,7 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-001',
                 'stock' => 5,
                 'category_id' => 1,
+                'cover' => getCoverPath('dunia_sophie.jpg'),
                 'description' => 'Novel filsafat yang mengisahkan perjalanan seorang gadis bernama Sophie dalam memahami dunia dan filsafat.'
             ],
             [
@@ -98,6 +114,7 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-002',
                 'stock' => 4,
                 'category_id' => 1,
+                'cover' => getCoverPath('laskar_pelangi.jpg'),
                 'description' => 'Kisah inspiratif tentang perjuangan 10 anak miskin di Belitung untuk mendapatkan pendidikan.'
             ],
             [
@@ -108,6 +125,7 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-003',
                 'stock' => 3,
                 'category_id' => 1,
+                'cover' => getCoverPath('bumi_manusia.jpg'),
                 'description' => 'Novel sejarah yang menceritakan perjuangan pribumi melawan penjajahan Belanda.'
             ],
             [
@@ -118,6 +136,7 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-004',
                 'stock' => 4,
                 'category_id' => 1,
+                'cover' => getCoverPath('perahu_kertas.jpg'),
                 'description' => 'Kisah tentang mimpi, cinta, dan perjuangan dua anak muda dalam meraih impian.'
             ],
             [
@@ -128,10 +147,11 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-005',
                 'stock' => 3,
                 'category_id' => 1,
+                'cover' => getCoverPath('sang_pemimpi.jpg'),
                 'description' => 'Sekuel Laskar Pelangi yang mengisahkan perjuangan Ikal dan Arai di Belitung.'
             ],
 
-            // 2. Non Fiksi (5 buku)
+            // ===== 2. Non Fiksi (5 buku) =====
             [
                 'title' => 'Atomic Habits',
                 'author' => 'James Clear',
@@ -140,6 +160,7 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-006',
                 'stock' => 6,
                 'category_id' => 2,
+                'cover' => getCoverPath('atomic_habits.jpg'),
                 'description' => 'Membangun kebiasaan kecil yang mengubah hidup secara fundamental.'
             ],
             [
@@ -150,6 +171,7 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-007',
                 'stock' => 4,
                 'category_id' => 2,
+                'cover' => getCoverPath('sapiens.jpg'),
                 'description' => 'Sejarah singkat umat manusia dari zaman purba hingga era modern.'
             ],
             [
@@ -160,6 +182,7 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-008',
                 'stock' => 3,
                 'category_id' => 2,
+                'cover' => getCoverPath('power_of_habit.jpg'),
                 'description' => 'Mengapa kita melakukan apa yang kita lakukan dan bagaimana mengubah kebiasaan.'
             ],
             [
@@ -170,6 +193,7 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-009',
                 'stock' => 5,
                 'category_id' => 2,
+                'cover' => getCoverPath('art_of_war.jpg'),
                 'description' => 'Strategi perang kuno yang masih relevan untuk bisnis dan kehidupan modern.'
             ],
             [
@@ -180,10 +204,11 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-010',
                 'stock' => 4,
                 'category_id' => 2,
+                'cover' => getCoverPath('rich_dad_poor_dad.jpg'),
                 'description' => 'Pelajaran tentang finansial dan kebebasan ekonomi dari dua sosok ayah.'
             ],
 
-            // 3. Teknologi (4 buku)
+            // ===== 3. Teknologi (4 buku) =====
             [
                 'title' => 'Laravel 10 untuk Pemula',
                 'author' => 'Sandhika Galih',
@@ -192,6 +217,7 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-011',
                 'stock' => 5,
                 'category_id' => 3,
+                'cover' => getCoverPath('laravel_10.png'),
                 'description' => 'Belajar Laravel dari dasar hingga mahir dengan studi kasus project nyata.'
             ],
             [
@@ -202,6 +228,7 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-012',
                 'stock' => 6,
                 'category_id' => 3,
+                'cover' => getCoverPath('python_crash.png'),
                 'description' => 'Belajar Python dengan cepat dan praktis untuk pemula hingga mahir.'
             ],
             [
@@ -212,6 +239,7 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-013',
                 'stock' => 3,
                 'category_id' => 3,
+                'cover' => getCoverPath('clean_code.jpg'),
                 'description' => 'Panduan menulis kode yang bersih, terstruktur, dan mudah dipelihara.'
             ],
             [
@@ -222,10 +250,11 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-014',
                 'stock' => 4,
                 'category_id' => 3,
+                'cover' => getCoverPath('javascript_good_parts.jpg'),
                 'description' => 'Fokus pada fitur-fitur terbaik JavaScript untuk pengembangan web modern.'
             ],
 
-            // 4. Sains (3 buku)
+            // ===== 4. Sains (3 buku) =====
             [
                 'title' => 'A Brief History of Time',
                 'author' => 'Stephen Hawking',
@@ -234,6 +263,7 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-015',
                 'stock' => 3,
                 'category_id' => 4,
+                'cover' => getCoverPath('brief_history_time.jpg'),
                 'description' => 'Penjelasan tentang alam semesta, lubang hitam, dan teori relativitas.'
             ],
             [
@@ -244,6 +274,7 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-016',
                 'stock' => 4,
                 'category_id' => 4,
+                'cover' => getCoverPath('selfish_gene.jpg'),
                 'description' => 'Teori evolusi dari perspektif gen yang egois.'
             ],
             [
@@ -254,10 +285,11 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-017',
                 'stock' => 3,
                 'category_id' => 4,
+                'cover' => getCoverPath('cosmos.jpg'),
                 'description' => 'Perjalanan menjelajahi alam semesta dan tempat manusia di dalamnya.'
             ],
 
-            // 5. Sejarah (3 buku)
+            // ===== 5. Sejarah (3 buku) =====
             [
                 'title' => 'Sejarah Dunia yang Disembunyikan',
                 'author' => 'John Doe',
@@ -266,6 +298,7 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-018',
                 'stock' => 5,
                 'category_id' => 5,
+                'cover' => getCoverPath('sejarah_dunia.jpg'),
                 'description' => 'Fakta-fakta menarik tentang sejarah dunia yang jarang diketahui.'
             ],
             [
@@ -276,6 +309,7 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-019',
                 'stock' => 3,
                 'category_id' => 5,
+                'cover' => getCoverPath('indonesia_sejarah.jpg'),
                 'description' => 'Sejarah Indonesia dari masa pra-sejarah hingga kemerdekaan.'
             ],
             [
@@ -286,10 +320,11 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-020',
                 'stock' => 4,
                 'category_id' => 5,
+                'cover' => getCoverPath('silk_roads.jpg'),
                 'description' => 'Sejarah dunia melalui jalur sutra dan peradaban timur.'
             ],
 
-            // 6. Bisnis (3 buku)
+            // ===== 6. Bisnis (3 buku) =====
             [
                 'title' => 'The Lean Startup',
                 'author' => 'Eric Ries',
@@ -298,6 +333,7 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-021',
                 'stock' => 4,
                 'category_id' => 6,
+                'cover' => getCoverPath('lean_startup.jpg'),
                 'description' => 'Metodologi untuk memulai bisnis dengan efisien dan mengurangi risiko.'
             ],
             [
@@ -308,6 +344,7 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-022',
                 'stock' => 3,
                 'category_id' => 6,
+                'cover' => getCoverPath('zero_to_one.jpg'),
                 'description' => 'Catatan tentang startup dan bagaimana menciptakan masa depan.'
             ],
             [
@@ -318,10 +355,11 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-023',
                 'stock' => 3,
                 'category_id' => 6,
+                'cover' => getCoverPath('good_to_great.jpg'),
                 'description' => 'Mengapa beberapa perusahaan menjadi hebat dan yang lainnya tidak.'
             ],
 
-            // 7. Psikologi (3 buku)
+            // ===== 7. Psikologi (3 buku) =====
             [
                 'title' => 'Thinking, Fast and Slow',
                 'author' => 'Daniel Kahneman',
@@ -330,6 +368,7 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-024',
                 'stock' => 4,
                 'category_id' => 7,
+                'cover' => getCoverPath('thinking_fast_slow.jpg'),
                 'description' => 'Dua sistem pemikiran manusia dan bagaimana mereka mempengaruhi keputusan.'
             ],
             [
@@ -340,6 +379,7 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-025',
                 'stock' => 3,
                 'category_id' => 7,
+                'cover' => getCoverPath('mindset.jpg'),
                 'description' => 'Psikologi kesuksesan dan perbedaan antara mindset tetap dan berkembang.'
             ],
             [
@@ -350,10 +390,11 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-026',
                 'stock' => 5,
                 'category_id' => 7,
+                'cover' => getCoverPath('psychology_money.jpg'),
                 'description' => 'Hubungan antara psikologi manusia dan keputusan keuangan.'
             ],
 
-            // 8. Pendidikan (3 buku)
+            // ===== 8. Pendidikan (3 buku) =====
             [
                 'title' => 'Pendidikan Anak Usia Dini',
                 'author' => 'Dr. Montessori',
@@ -362,6 +403,7 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-027',
                 'stock' => 4,
                 'category_id' => 8,
+                'cover' => getCoverPath('pendidikan_anak.jpg'),
                 'description' => 'Metode pendidikan untuk anak usia dini berbasis Montessori.'
             ],
             [
@@ -372,6 +414,7 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-028',
                 'stock' => 3,
                 'category_id' => 8,
+                'cover' => getCoverPath('teachers_guide.jpg'),
                 'description' => 'Panduan praktis untuk guru dalam meningkatkan kualitas pembelajaran.'
             ],
             [
@@ -382,10 +425,11 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-029',
                 'stock' => 3,
                 'category_id' => 8,
+                'cover' => getCoverPath('learning_how_to_learn.jpg'),
                 'description' => 'Strategi efektif untuk belajar dan menguasai materi dengan cepat.'
             ],
 
-            // 9. Kesehatan (3 buku)
+            // ===== 9. Kesehatan (3 buku) =====
             [
                 'title' => 'Why We Sleep',
                 'author' => 'Matthew Walker',
@@ -394,6 +438,7 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-030',
                 'stock' => 4,
                 'category_id' => 9,
+                'cover' => getCoverPath('why_we_sleep.jpg'),
                 'description' => 'Eksplorasi tentang pentingnya tidur bagi kesehatan fisik dan mental.'
             ],
             [
@@ -404,6 +449,7 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-031',
                 'stock' => 3,
                 'category_id' => 9,
+                'cover' => getCoverPath('blue_zones.jpg'),
                 'description' => 'Rahasia kesehatan dan umur panjang dari 5 zona biru di dunia.'
             ],
             [
@@ -414,10 +460,11 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-032',
                 'stock' => 3,
                 'category_id' => 9,
+                'cover' => getCoverPath('eat_move_sleep.jpg'),
                 'description' => 'Panduan hidup sehat melalui pola makan, gerakan, dan tidur yang baik.'
             ],
 
-            // 10. Agama (3 buku)
+            // ===== 10. Agama (3 buku) =====
             [
                 'title' => 'The Power of Now',
                 'author' => 'Eckhart Tolle',
@@ -426,6 +473,7 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-033',
                 'stock' => 4,
                 'category_id' => 10,
+                'cover' => getCoverPath('power_of_now.jpg'),
                 'description' => 'Panduan spiritual untuk hidup di masa sekarang dan menemukan kedamaian.'
             ],
             [
@@ -436,6 +484,7 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-034',
                 'stock' => 3,
                 'category_id' => 10,
+                'cover' => getCoverPath('purpose_driven_life.jpg'),
                 'description' => 'Menemukan tujuan hidup melalui perspektif agama dan spiritualitas.'
             ],
             [
@@ -446,10 +495,12 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-035',
                 'stock' => 3,
                 'category_id' => 10,
+                'cover' => getCoverPath('muhammad_prophet.jpg'),
                 'description' => 'Biografi Nabi Muhammad SAW dan pesannya untuk dunia modern.'
             ],
         ];
 
+        // ========== SIMPAN DATA BUKU ==========
         foreach ($books as $book) {
             $book['available_stock'] = $book['stock'];
             Book::create($book);
