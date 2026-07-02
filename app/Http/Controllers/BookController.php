@@ -10,20 +10,32 @@ use Illuminate\Support\Str;
 
 class BookController extends Controller
 {
-    // ========== ADMIN: LIHAT SEMUA BUKU (Tanpa Pagination) ==========
+    // ========== ADMIN: LIHAT SEMUA BUKU ==========
     public function index()
     {
-        // ✅ Ambil SEMUA buku tanpa pagination
         $books = Book::with('category')->latest()->get();
         return view('admin.books.index', compact('books'));
     }
 
-    // ========== MEMBER: LIHAT SEMUA BUKU (Tanpa Pagination) ==========
-    public function memberIndex()
+    // ========== MEMBER: LIHAT KATALOG BUKU (DENGAN FILTER KATEGORI) ==========
+    public function memberIndex(Request $request)
     {
-        // ✅ Ambil SEMUA buku tanpa pagination
-        $books = Book::with('category')->latest()->get();
-        return view('member.books.index', compact('books'));
+        // Ambil semua kategori untuk dropdown
+        $categories = Category::all();
+        
+        // Query buku dengan relasi kategori
+        $query = Book::with('category');
+        
+        // Filter berdasarkan kategori jika ada
+        if ($request->has('category') && $request->category != '') {
+            $query->where('category_id', $request->category);
+        }
+        
+        // Ambil data buku
+        $books = $query->latest()->get();
+        
+        // Kirim data ke view
+        return view('member.books.index', compact('books', 'categories'));
     }
 
     // ========== TAMPILKAN FORM TAMBAH ==========
@@ -61,7 +73,7 @@ class BookController extends Controller
     // ========== DETAIL BUKU ==========
     public function show(Book $book)
     {
-        if (auth()->user()->isMember()) {
+        if (auth()->user()->isMember) {
             return view('member.books.show', compact('book'));
         }
         return view('admin.books.show', compact('book'));

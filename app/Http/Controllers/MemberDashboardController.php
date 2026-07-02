@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Transaction;
 use App\Models\Penalty;
+use App\Models\Book;
+use App\Models\Category;
 use Illuminate\Support\Facades\Auth;
 
 class MemberDashboardController extends Controller

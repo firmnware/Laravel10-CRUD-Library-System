@@ -39,9 +39,10 @@
     </div>
 </div>
 
+<!-- Buku yang Sedang Dipinjam -->
 <div class="card mb-4">
     <div class="card-header bg-primary text-white">
-        <h5>Buku yang Sedang Dipinjam</h5>
+        <h5 class="mb-0">Buku yang Sedang Dipinjam</h5>
     </div>
     <div class="card-body">
         @if(isset($currentBorrows) && $currentBorrows->count() > 0)
@@ -72,6 +73,88 @@
             </div>
         @else
             <p class="text-muted">Tidak ada buku yang sedang dipinjam</p>
+        @endif
+    </div>
+</div>
+
+<!-- Tombol Cepat -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <a href="{{ route('member.books.index') }}" class="text-white text-decoration-none">
+                    <i class="fas fa-book fa-3x mb-2 d-block"></i>
+                    <h5>Cari Buku</h5>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <a href="{{ route('member.borrows') }}" class="text-white text-decoration-none">
+                    <i class="fas fa-history fa-3x mb-2 d-block"></i>
+                    <h5>Riwayat Pinjam</h5>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-danger text-white">
+            <div class="card-body text-center">
+                <a href="{{ route('member.penalties') }}" class="text-white text-decoration-none">
+                    <i class="fas fa-money-bill fa-3x mb-2 d-block"></i>
+                    <h5>Cek Denda</h5>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Riwayat Peminjaman -->
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Riwayat Peminjaman Terakhir</h5>
+    </div>
+    <div class="card-body">
+        @if(isset($borrowHistory) && $borrowHistory->count() > 0)
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Kode</th>
+                            <th>Buku</th>
+                            <th>Tgl Pinjam</th>
+                            <th>Tgl Kembali</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($borrowHistory as $borrow)
+                        <tr>
+                            <td>{{ $borrow->transaction_code }}</td>
+                            <td>{{ $borrow->book->title ?? '-' }}</td>
+                            <td>{{ $borrow->borrow_date?->format('d/m/Y') ?? '-' }}</td>
+                            <td>{{ $borrow->return_date?->format('d/m/Y') ?? '-' }}</td>
+                            <td>
+                                @if($borrow->status == 'borrowed')
+                                    <span class="badge bg-warning">Dipinjam</span>
+                                @else
+                                    <span class="badge bg-success">Dikembalikan</span>
+                                @endif
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            <div class="text-end">
+                <a href="{{ route('member.borrows') }}" class="btn btn-primary btn-sm">
+                    Lihat Semua <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+        @else
+            <p class="text-muted">Belum ada riwayat peminjaman</p>
         @endif
     </div>
 </div>
