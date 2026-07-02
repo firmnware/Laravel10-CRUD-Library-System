@@ -7,7 +7,7 @@
     <div class="col-md-5">
         <div class="card">
             <div class="card-header bg-primary text-white text-center py-3">
-                <h4><i class="fas fa-sign-in-alt me-2"></i> Login Perpustakaan</h4>
+                <h4><i class="fas fa-sign-in-alt me-2"></i> Login Perpustakaan The Origin</h4>
             </div>
             <div class="card-body p-4">
                 <form method="POST" action="{{ route('login') }}">

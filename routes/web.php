@@ -47,15 +47,12 @@ Route::middleware('auth')->group(function () {
     
     // MEMBER ROUTES
     Route::middleware('member')->prefix('member')->name('member.')->group(function () {
-        Route::get('/dashboard', [MemberDashboardController::class, 'index'])->name('dashboard');
-        
-        // ✅ KATALOG BUKU DENGAN FILTER
-        Route::get('/books', [BookController::class, 'memberIndex'])->name('books.index');
-        Route::get('/books/{book}', [BookController::class, 'show'])->name('books.show');
-        
-        Route::get('/my-borrows', [MemberDashboardController::class, 'myBorrows'])->name('borrows');
-        Route::get('/my-penalties', [MemberDashboardController::class, 'myPenalties'])->name('penalties');
-    });
+    Route::get('/dashboard', [MemberDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/books', [BookController::class, 'memberIndex'])->name('books.index');
+    Route::get('/books/{book}', [BookController::class, 'show'])->name('books.show');
+    Route::get('/my-borrows', [MemberDashboardController::class, 'myBorrows'])->name('borrows');
+    Route::get('/my-penalties', [MemberDashboardController::class, 'myPenalties'])->name('penalties');
+});
     
     // Redirect
     Route::get('/dashboard', function () {

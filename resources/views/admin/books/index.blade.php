@@ -18,6 +18,64 @@
             </div>
         @endif
 
+        <!--  FORM SEARCH & FILTER -->
+        <form method="GET" action="{{ route('admin.books.index') }}" class="mb-4">
+            <div class="row g-2">
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" name="search" class="form-control" 
+                               placeholder="Cari judul buku..." 
+                               value="{{ request('search') }}">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <select name="category" class="form-control">
+                        <option value="">-- Semua Kategori --</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category->id }}" {{ request('category') == $category->id ? 'selected' : '' }}>
+                                {{ $category->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-1"></i> Filter
+                    </button>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-md-12">
+                    @if(request('search') || request('category'))
+                        <div class="d-flex gap-2 flex-wrap">
+                            <span class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i> 
+                                Menampilkan <strong>{{ $books->count() }}</strong> buku
+                            </span>
+                            @if(request('search'))
+                                <span class="badge bg-info">Pencarian: "{{ request('search') }}"</span>
+                            @endif
+                            @if(request('category'))
+                                @php
+                                    $categoryName = $categories->firstWhere('id', request('category'))->name ?? '';
+                                @endphp
+                                <span class="badge bg-primary">Kategori: {{ $categoryName }}</span>
+                            @endif
+                            <a href="{{ route('admin.books.index') }}" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-times me-1"></i> Reset Filter
+                            </a>
+                        </div>
+                    @else
+                        <span class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i> 
+                            Menampilkan <strong>{{ $books->count() }}</strong> buku
+                        </span>
+                    @endif
+                </div>
+            </div>
+        </form>
+
         @if($books->count() > 0)
             <div class="table-responsive">
                 <table class="table table-bordered table-hover align-middle">
@@ -96,16 +154,19 @@
                     </tbody>
                 </table>
             </div>
-            
-            <!--  menampilkan total buku -->
-            <div class="mt-3 text-muted">
-                <i class="fas fa-info-circle me-1"></i> 
-                Menampilkan <strong>{{ $books->count() }}</strong> buku
-            </div>
         @else
             <div class="text-center py-5">
                 <i class="fas fa-book fa-3x text-muted mb-3"></i>
-                <p class="text-muted">Belum ada data buku. <a href="{{ route('admin.books.create') }}">Tambah buku sekarang</a></p>
+                <p class="text-muted">Tidak ada buku yang ditemukan</p>
+                @if(request('search') || request('category'))
+                    <a href="{{ route('admin.books.index') }}" class="btn btn-primary">
+                        <i class="fas fa-undo me-1"></i> Lihat Semua Buku
+                    </a>
+                @else
+                    <a href="{{ route('admin.books.create') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i> Tambah Buku Sekarang
+                    </a>
+                @endif
             </div>
         @endif
     </div>

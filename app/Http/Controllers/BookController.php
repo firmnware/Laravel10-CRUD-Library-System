@@ -10,14 +10,32 @@ use Illuminate\Support\Str;
 
 class BookController extends Controller
 {
-    // ========== ADMIN: LIHAT SEMUA BUKU ==========
-    public function index()
+    // ========== ADMIN: LIHAT SEMUA BUKU (DENGAN SEARCH & FILTER) ==========
+    public function index(Request $request)
     {
-        $books = Book::with('category')->latest()->get();
-        return view('admin.books.index', compact('books'));
+        // Ambil semua kategori untuk dropdown filter
+        $categories = Category::all();
+        
+        // Query buku dengan relasi kategori
+        $query = Book::with('category');
+        
+        //  FILTER BERDASARKAN KATEGORI
+        if ($request->has('category') && $request->category != '') {
+            $query->where('category_id', $request->category);
+        }
+        
+        //  SEARCH BERDASARKAN JUDUL BUKU
+        if ($request->has('search') && $request->search != '') {
+            $query->where('title', 'like', '%' . $request->search . '%');
+        }
+        
+        // Ambil data buku
+        $books = $query->latest()->get();
+        
+        return view('admin.books.index', compact('books', 'categories'));
     }
 
-    // ========== MEMBER: LIHAT KATALOG BUKU (DENGAN FILTER KATEGORI) ==========
+    // ========== MEMBER: LIHAT KATALOG BUKU (DENGAN SEARCH & FILTER) ==========
     public function memberIndex(Request $request)
     {
         // Ambil semua kategori untuk dropdown
@@ -26,15 +44,19 @@ class BookController extends Controller
         // Query buku dengan relasi kategori
         $query = Book::with('category');
         
-        // Filter berdasarkan kategori jika ada
+        //  FILTER BERDASARKAN KATEGORI
         if ($request->has('category') && $request->category != '') {
             $query->where('category_id', $request->category);
+        }
+        
+        //  SEARCH BERDASARKAN JUDUL BUKU
+        if ($request->has('search') && $request->search != '') {
+            $query->where('title', 'like', '%' . $request->search . '%');
         }
         
         // Ambil data buku
         $books = $query->latest()->get();
         
-        // Kirim data ke view
         return view('member.books.index', compact('books', 'categories'));
     }
 
@@ -73,7 +95,7 @@ class BookController extends Controller
     // ========== DETAIL BUKU ==========
     public function show(Book $book)
     {
-        if (auth()->user()->isMember) {
+        if (auth()->user()->isMember()) {
             return view('member.books.show', compact('book'));
         }
         return view('admin.books.show', compact('book'));

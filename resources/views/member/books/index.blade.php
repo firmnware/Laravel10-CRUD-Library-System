@@ -8,43 +8,63 @@
         <h5 class="mb-0"><i class="fas fa-book me-2"></i> Katalog Buku Perpustakaan</h5>
     </div>
     <div class="card-body">
-        <!-- Filter Kategori -->
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <form method="GET" action="{{ route('member.books.index') }}" class="d-flex gap-2">
-                    <div class="flex-grow-1">
-                        <select name="category" id="category_filter" class="form-control">
-                            <option value="">-- Semua Kategori --</option>
-                            @foreach($categories as $category)
-                                <option value="{{ $category->id }}" {{ request('category') == $category->id ? 'selected' : '' }}>
-                                    {{ $category->name }}
-                                </option>
-                            @endforeach
-                        </select>
+        <!--  FORM SEARCH & FILTER -->
+        <form method="GET" action="{{ route('member.books.index') }}" class="mb-4">
+            <div class="row g-2">
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" name="search" class="form-control" 
+                               placeholder="Cari judul buku..." 
+                               value="{{ request('search') }}">
                     </div>
-                    <button type="submit" class="btn btn-primary">
+                </div>
+                <div class="col-md-4">
+                    <select name="category" class="form-control">
+                        <option value="">-- Semua Kategori --</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category->id }}" {{ request('category') == $category->id ? 'selected' : '' }}>
+                                {{ $category->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100">
                         <i class="fas fa-filter me-1"></i> Filter
                     </button>
-                    @if(request('category'))
-                        <a href="{{ route('member.books.index') }}" class="btn btn-secondary">
-                            <i class="fas fa-times me-1"></i> Reset
-                        </a>
-                    @endif
-                </form>
+                </div>
             </div>
-            <div class="col-md-6 text-end">
-                <span class="text-muted">
-                    <i class="fas fa-info-circle me-1"></i> 
-                    Menampilkan <strong>{{ $books->count() }}</strong> buku
-                    @if(request('category'))
-                        @php
-                            $categoryName = $categories->firstWhere('id', request('category'))->name ?? '';
-                        @endphp
-                        <span class="badge bg-info ms-2">Kategori: {{ $categoryName }}</span>
+            <div class="row mt-2">
+                <div class="col-md-12">
+                    @if(request('search') || request('category'))
+                        <div class="d-flex gap-2 flex-wrap">
+                            <span class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i> 
+                                Menampilkan <strong>{{ $books->count() }}</strong> buku
+                            </span>
+                            @if(request('search'))
+                                <span class="badge bg-info">Pencarian: "{{ request('search') }}"</span>
+                            @endif
+                            @if(request('category'))
+                                @php
+                                    $categoryName = $categories->firstWhere('id', request('category'))->name ?? '';
+                                @endphp
+                                <span class="badge bg-primary">Kategori: {{ $categoryName }}</span>
+                            @endif
+                            <a href="{{ route('member.books.index') }}" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-times me-1"></i> Reset Filter
+                            </a>
+                        </div>
+                    @else
+                        <span class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i> 
+                            Menampilkan <strong>{{ $books->count() }}</strong> buku
+                        </span>
                     @endif
-                </span>
+                </div>
             </div>
-        </div>
+        </form>
 
         @if($books->count() > 0)
             <div class="row">
@@ -98,7 +118,7 @@
             <div class="text-center py-5">
                 <i class="fas fa-book fa-3x text-muted mb-3"></i>
                 <p class="text-muted">Tidak ada buku yang ditemukan</p>
-                @if(request('category'))
+                @if(request('search') || request('category'))
                     <a href="{{ route('member.books.index') }}" class="btn btn-primary">
                         <i class="fas fa-undo me-1"></i> Lihat Semua Buku
                     </a>
@@ -112,11 +132,20 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Auto submit form ketika kategori berubah (opsional)
-        const categoryFilter = document.getElementById('category_filter');
+        const categoryFilter = document.querySelector('select[name="category"]');
         if (categoryFilter) {
             categoryFilter.addEventListener('change', function() {
-                // Submit form otomatis
                 this.closest('form').submit();
+            });
+        }
+
+        // Auto submit jika tombol enter ditekan di input search
+        const searchInput = document.querySelector('input[name="search"]');
+        if (searchInput) {
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    this.closest('form').submit();
+                }
             });
         }
     });
