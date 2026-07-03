@@ -41,7 +41,7 @@
                         <div class="d-flex gap-2 flex-wrap">
                             <span class="text-muted">
                                 <i class="fas fa-info-circle me-1"></i> 
-                                Menampilkan <strong>{{ $books->count() }}</strong> buku
+                                Menampilkan <strong>{{ $books->total() }}</strong> buku
                             </span>
                             @if(request('search'))
                                 <span class="badge bg-info">Pencarian: "{{ request('search') }}"</span>
@@ -59,7 +59,7 @@
                     @else
                         <span class="text-muted">
                             <i class="fas fa-info-circle me-1"></i> 
-                            Menampilkan <strong>{{ $books->count() }}</strong> buku
+                            Menampilkan <strong>{{ $books->total() }}</strong> buku
                         </span>
                     @endif
                 </div>
@@ -114,6 +114,18 @@
                 </div>
                 @endforeach
             </div>
+
+            {{--  PAGINATION 20 BUKU PER HALAMAN --}}
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <div class="text-muted small">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Menampilkan <strong>{{ $books->firstItem() }}</strong> - <strong>{{ $books->lastItem() }}</strong> 
+                    dari <strong>{{ $books->total() }}</strong> buku
+                </div>
+                <div>
+                    {{ $books->appends(request()->query())->links('pagination::bootstrap-5') }}
+                </div>
+            </div>
         @else
             <div class="text-center py-5">
                 <i class="fas fa-book fa-3x text-muted mb-3"></i>
@@ -131,7 +143,6 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Auto submit form ketika kategori berubah (opsional)
         const categoryFilter = document.querySelector('select[name="category"]');
         if (categoryFilter) {
             categoryFilter.addEventListener('change', function() {
@@ -139,7 +150,6 @@
             });
         }
 
-        // Auto submit jika tombol enter ditekan di input search
         const searchInput = document.querySelector('input[name="search"]');
         if (searchInput) {
             searchInput.addEventListener('keypress', function(e) {

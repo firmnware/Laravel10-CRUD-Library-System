@@ -89,7 +89,8 @@
         </div>
     </div>
     <div class="card-footer">
-        <a href="{{ route('member.books.index') }}" class="btn btn-secondary">
+        {{--  TOMBOL KEMBALI DENGAN PARAMETER KATEGORI (MEMBER) --}}
+        <a href="{{ route('member.books.index', ['category' => session('member_last_category', '')]) }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left me-2"></i> Kembali ke Katalog
         </a>
     </div>

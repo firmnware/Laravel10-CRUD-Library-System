@@ -44,6 +44,7 @@
     </div>
 </div>
 
+<!-- Transaksi Terbaru -->
 <div class="card">
     <div class="card-header">
         <h5>Transaksi Terbaru</h5>
@@ -58,6 +59,7 @@
                             <th>Member</th>
                             <th>Buku</th>
                             <th>Tgl Pinjam</th>
+                            <th>Jatuh Tempo</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -68,6 +70,7 @@
                             <td>{{ $trx->member->user->name ?? '-' }}</td>
                             <td>{{ $trx->book->title ?? '-' }}</td>
                             <td>{{ $trx->borrow_date?->format('d/m/Y') ?? '-' }}</td>
+                            <td>{{ $trx->due_date?->format('d/m/Y') ?? '-' }}</td>
                             <td>
                                 @if($trx->status == 'borrowed')
                                     <span class="badge bg-warning">Dipinjam</span>
@@ -80,6 +83,11 @@
                     </tbody>
                 </table>
             </div>
+            @if(isset($recentTransactions) && method_exists($recentTransactions, 'links'))
+                <div class="d-flex justify-content-center">
+                    {{ $recentTransactions->links() }}
+                </div>
+            @endif
         @else
             <p class="text-muted">Belum ada transaksi</p>
         @endif

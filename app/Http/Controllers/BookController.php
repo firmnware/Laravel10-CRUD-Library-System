@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 class BookController extends Controller
 {
-    // ========== ADMIN: LIHAT SEMUA BUKU (DENGAN SEARCH & FILTER) ==========
+    // ========== ADMIN: LIHAT SEMUA BUKU (DENGAN SEARCH & FILTER + PAGINATION 20) ==========
     public function index(Request $request)
     {
         // Ambil semua kategori untuk dropdown filter
@@ -22,40 +22,45 @@ class BookController extends Controller
         //  FILTER BERDASARKAN KATEGORI
         if ($request->has('category') && $request->category != '') {
             $query->where('category_id', $request->category);
+            session(['last_category' => $request->category]);
         }
         
         //  SEARCH BERDASARKAN JUDUL BUKU
         if ($request->has('search') && $request->search != '') {
             $query->where('title', 'like', '%' . $request->search . '%');
+            session(['last_search' => $request->search]);
         }
         
-        // Ambil data buku
-        $books = $query->latest()->get();
+        //  PAGINATION 20 BUKU PER HALAMAN
+        $books = $query->latest()->paginate(20);
+        
+        // Menambahkan query string ke pagination
+        $books->appends(request()->query());
         
         return view('admin.books.index', compact('books', 'categories'));
     }
 
-    // ========== MEMBER: LIHAT KATALOG BUKU (DENGAN SEARCH & FILTER) ==========
+    // ========== MEMBER: LIHAT KATALOG BUKU (DENGAN SEARCH & FILTER + PAGINATION 20) ==========
     public function memberIndex(Request $request)
     {
-        // Ambil semua kategori untuk dropdown
         $categories = Category::all();
-        
-        // Query buku dengan relasi kategori
         $query = Book::with('category');
         
-        //  FILTER BERDASARKAN KATEGORI
         if ($request->has('category') && $request->category != '') {
             $query->where('category_id', $request->category);
+            session(['member_last_category' => $request->category]);
         }
         
-        //  SEARCH BERDASARKAN JUDUL BUKU
         if ($request->has('search') && $request->search != '') {
             $query->where('title', 'like', '%' . $request->search . '%');
+            session(['member_last_search' => $request->search]);
         }
         
-        // Ambil data buku
-        $books = $query->latest()->get();
+        //  PAGINATION 20 BUKU PER HALAMAN
+        $books = $query->latest()->paginate(20);
+        
+        // Menambahkan query string ke pagination
+        $books->appends(request()->query());
         
         return view('member.books.index', compact('books', 'categories'));
     }

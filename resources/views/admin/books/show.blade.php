@@ -16,7 +16,8 @@
                          class="img-fluid rounded shadow" 
                          style="max-height: 400px; object-fit: contain;">
                 @else
-                    <div class="bg-secondary text-white p-5 rounded shadow" style="min-height: 300px; display: flex; align-items: center; justify-content: center;">
+                    <div class="bg-secondary text-white p-5 rounded shadow" 
+                         style="min-height: 300px; display: flex; align-items: center; justify-content: center;">
                         <div>
                             <i class="fas fa-book fa-5x mb-3"></i>
                             <p class="mb-0">Tidak ada cover</p>
@@ -95,7 +96,8 @@
         <a href="{{ route('admin.books.edit', $book) }}" class="btn btn-warning">
             <i class="fas fa-edit me-2"></i> Edit
         </a>
-        <a href="{{ route('admin.books.index') }}" class="btn btn-secondary">
+        {{--  TOMBOL KEMBALI DENGAN PARAMETER KATEGORI --}}
+        <a href="{{ route('admin.books.index', ['category' => session('last_category', '')]) }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left me-2"></i> Kembali
         </a>
     </div>

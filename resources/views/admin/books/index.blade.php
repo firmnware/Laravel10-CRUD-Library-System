@@ -51,7 +51,7 @@
                         <div class="d-flex gap-2 flex-wrap">
                             <span class="text-muted">
                                 <i class="fas fa-info-circle me-1"></i> 
-                                Menampilkan <strong>{{ $books->count() }}</strong> buku
+                                Menampilkan <strong>{{ $books->total() }}</strong> buku
                             </span>
                             @if(request('search'))
                                 <span class="badge bg-info">Pencarian: "{{ request('search') }}"</span>
@@ -69,7 +69,7 @@
                     @else
                         <span class="text-muted">
                             <i class="fas fa-info-circle me-1"></i> 
-                            Menampilkan <strong>{{ $books->count() }}</strong> buku
+                            Menampilkan <strong>{{ $books->total() }}</strong> buku
                         </span>
                     @endif
                 </div>
@@ -94,7 +94,7 @@
                     <tbody>
                         @foreach($books as $index => $book)
                         <tr>
-                            <td>{{ $index + 1 }}</td>
+                            <td>{{ $books->firstItem() + $index }}</td>
                             <td>
                                 @if($book->cover && Storage::disk('public')->exists($book->cover))
                                     <img src="{{ asset('storage/' . $book->cover) }}" 
@@ -153,6 +153,18 @@
                         @endforeach
                     </tbody>
                 </table>
+            </div>
+
+            {{--  PAGINATION 20 BUKU PER HALAMAN --}}
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <div class="text-muted small">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Menampilkan <strong>{{ $books->firstItem() }}</strong> - <strong>{{ $books->lastItem() }}</strong> 
+                    dari <strong>{{ $books->total() }}</strong> buku
+                </div>
+                <div>
+                    {{ $books->appends(request()->query())->links('pagination::bootstrap-5') }}
+                </div>
             </div>
         @else
             <div class="text-center py-5">

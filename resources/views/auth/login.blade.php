@@ -33,8 +33,8 @@
                 <p class="text-center mb-0">Belum punya akun? <a href="{{ route('register') }}">Daftar sebagai Member</a></p>
                 <div class="bg-light p-3 rounded-3 mt-3 text-center small">
                     <p class="mb-1 fw-semibold">Akun Demo:</p>
-                    <p class="mb-0">Admin: admin@library.com / password123</p>
-                    <p class="mb-0">Member: member@library.com / password123</p>
+                    <p class="mb-0">Admin: admin@gmail.com / password123</p>
+                    <p class="mb-0">Member: member@gmail.com / password123</p>
                 </div>
             </div>
         </div>

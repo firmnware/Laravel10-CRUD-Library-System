@@ -122,7 +122,8 @@
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-save me-2"></i> Update Buku
                 </button>
-                <a href="{{ route('admin.books.index') }}" class="btn btn-secondary">
+                {{--  TOMBOL KEMBALI DENGAN PARAMETER KATEGORI --}}
+                <a href="{{ route('admin.books.index', ['category' => session('last_category', '')]) }}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left me-2"></i> Batal
                 </a>
             </div>

@@ -11,6 +11,7 @@ class MemberController extends Controller
 {
     public function index()
     {
+        //  PAGINATION 10 MEMBER PER HALAMAN
         $members = Member::with('user')->latest()->paginate(10);
         return view('admin.members.index', compact('members'));
     }

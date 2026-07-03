@@ -110,7 +110,8 @@
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-save me-2"></i> Simpan Buku
                 </button>
-                <a href="{{ route('admin.books.index') }}" class="btn btn-secondary">
+                {{--  TOMBOL KEMBALI DENGAN PARAMETER KATEGORI --}}
+                <a href="{{ route('admin.books.index', ['category' => session('last_category', '')]) }}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left me-2"></i> Batal
                 </a>
             </div>
@@ -132,13 +133,6 @@
                                           style="max-height: 250px; object-fit: contain;">`;
             }
             reader.readAsDataURL(file);
-        } else {
-            preview.innerHTML = `
-                <div>
-                    <i class="fas fa-book fa-4x text-muted"></i>
-                    <p class="text-muted mt-2">Belum ada cover</p>
-                </div>
-            `;
         }
     });
 </script>
