@@ -13,22 +13,25 @@ use Illuminate\Support\Facades\DB;
 
 class TransactionController extends Controller
 {
+    // ========== INDEX: TAMPILKAN SEMUA TRANSAKSI DENGAN STATUS DENDA ==========
     public function index()
     {
-        $transactions = Transaction::with(['member.user', 'book'])
+        $transactions = Transaction::with(['member.user', 'book', 'penalty'])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
         return view('admin.transactions.index', compact('transactions'));
     }
 
+    // ========== CREATE: FORM PEMINJAMAN ==========
     public function create()
     {
         $members = Member::where('status', 'active')->get();
         $books = Book::with('category')->where('available_stock', '>', 0)->get();
-        $categories = Category::all(); 
+        $categories = Category::all();
         return view('admin.transactions.create', compact('members', 'books', 'categories'));
     }
 
+    // ========== STORE: PROSES PEMINJAMAN ==========
     public function store(Request $request)
     {
         $request->validate([
@@ -71,10 +74,11 @@ class TransactionController extends Controller
                 ->with('success', 'Peminjaman berhasil! Kode: ' . $transaction->transaction_code);
         } catch (\Exception $e) {
             DB::rollback();
-            return back()->with('error', 'Gagal memproses peminjaman');
+            return back()->with('error', 'Gagal memproses peminjaman: ' . $e->getMessage());
         }
     }
 
+    // ========== RETURN BOOK: PROSES PENGEMBALIAN ==========
     public function returnBook(Transaction $transaction)
     {
         if ($transaction->status === 'returned') {
@@ -93,15 +97,30 @@ class TransactionController extends Controller
 
             $transaction->book->increaseStock();
 
+            //  Buat atau update penalty
             if ($daysLate > 0) {
                 $fineAmount = $daysLate * 2000;
-                Penalty::create([
-                    'transaction_id' => $transaction->id,
-                    'member_id' => $transaction->member_id,
-                    'days_late' => $daysLate,
-                    'fine_amount' => $fineAmount,
-                    'status' => 'unpaid'
-                ]);
+                
+                // Cek apakah sudah ada penalty
+                $penalty = Penalty::where('transaction_id', $transaction->id)->first();
+                
+                if ($penalty) {
+                    // Update penalty yang sudah ada
+                    $penalty->update([
+                        'days_late' => $daysLate,
+                        'fine_amount' => $fineAmount,
+                    ]);
+                } else {
+                    // Buat penalty baru
+                    Penalty::create([
+                        'transaction_id' => $transaction->id,
+                        'member_id' => $transaction->member_id,
+                        'days_late' => $daysLate,
+                        'fine_amount' => $fineAmount,
+                        'status' => 'unpaid',
+                        'paid_date' => null,
+                    ]);
+                }
             }
 
             DB::commit();
@@ -114,7 +133,13 @@ class TransactionController extends Controller
             return redirect()->route('admin.transactions.index')->with('success', $message);
         } catch (\Exception $e) {
             DB::rollback();
-            return back()->with('error', 'Gagal memproses pengembalian');
+            return back()->with('error', 'Gagal memproses pengembalian: ' . $e->getMessage());
         }
+    }
+
+    // ========== SHOW: DETAIL TRANSAKSI ==========
+    public function show(Transaction $transaction)
+    {
+        return view('admin.transactions.show', compact('transaction'));
     }
 }

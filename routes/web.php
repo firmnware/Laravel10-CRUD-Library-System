@@ -32,31 +32,40 @@ Route::middleware('auth')->group(function () {
     // ADMIN ROUTES
     Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+        
+        // Manajemen Buku
         Route::resource('books', BookController::class);
+        
+        // Manajemen Member
         Route::get('members', [MemberController::class, 'index'])->name('members.index');
         Route::get('members/create', [MemberController::class, 'create'])->name('members.create');
         Route::post('members', [MemberController::class, 'store'])->name('members.store');
         Route::put('members/{member}/toggle-status', [MemberController::class, 'toggleStatus'])->name('members.toggle-status');
+        
+        // Transaksi
         Route::get('transactions', [TransactionController::class, 'index'])->name('transactions.index');
         Route::get('transactions/create', [TransactionController::class, 'create'])->name('transactions.create');
         Route::post('transactions', [TransactionController::class, 'store'])->name('transactions.store');
         Route::put('transactions/{transaction}/return', [TransactionController::class, 'returnBook'])->name('transactions.return');
+        
+        //  DENDA
         Route::get('penalties', [PenaltyController::class, 'index'])->name('penalties.index');
+        Route::get('penalties/{penalty}/pay', [PenaltyController::class, 'showPayForm'])->name('penalties.pay.form');
         Route::put('penalties/{penalty}/pay', [PenaltyController::class, 'payPenalty'])->name('penalties.pay');
     });
     
     // MEMBER ROUTES
     Route::middleware('member')->prefix('member')->name('member.')->group(function () {
-    Route::get('/dashboard', [MemberDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/books', [BookController::class, 'memberIndex'])->name('books.index');
-    Route::get('/books/{book}', [BookController::class, 'show'])->name('books.show');
-    Route::get('/my-borrows', [MemberDashboardController::class, 'myBorrows'])->name('borrows');
-    Route::get('/my-penalties', [MemberDashboardController::class, 'myPenalties'])->name('penalties');
-});
+        Route::get('/dashboard', [MemberDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/books', [BookController::class, 'memberIndex'])->name('books.index');
+        Route::get('/books/{book}', [BookController::class, 'show'])->name('books.show');
+        Route::get('/my-borrows', [MemberDashboardController::class, 'myBorrows'])->name('borrows');
+        Route::get('/my-penalties', [MemberDashboardController::class, 'myPenalties'])->name('penalties');
+    });
     
     // Redirect
     Route::get('/dashboard', function () {
-        return auth()->user()->isAdmin 
+        return auth()->user()->isAdmin() 
             ? redirect()->route('admin.dashboard') 
             : redirect()->route('member.dashboard');
     })->name('dashboard');

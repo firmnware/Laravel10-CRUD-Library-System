@@ -6,9 +6,12 @@ use App\Models\User;
 use App\Models\Member;
 use App\Models\Category;
 use App\Models\Book;
+use App\Models\Transaction;
+use App\Models\Penalty;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class DatabaseSeeder extends Seeder
 {
@@ -23,6 +26,7 @@ class DatabaseSeeder extends Seeder
             'status' => 'active',
             'phone' => '081234567890',
             'address' => 'Jl. Admin No. 1',
+            'last_login_at' => now(),
         ]);
 
         // ========== BUAT MEMBER ==========
@@ -34,12 +38,13 @@ class DatabaseSeeder extends Seeder
             'status' => 'active',
             'phone' => '081234567891',
             'address' => 'Jl. Member No. 123',
+            'last_login_at' => now(),
         ]);
 
-        Member::create([
+        $member1Profile = Member::create([
             'user_id' => $member1->id,
             'member_code' => 'MBR-00001',
-            'join_date' => now(),
+            'join_date' => now()->subDays(30),
             'status' => 'active'
         ]);
 
@@ -51,12 +56,13 @@ class DatabaseSeeder extends Seeder
             'status' => 'active',
             'phone' => '081234567892',
             'address' => 'Jl. Member No. 456',
+            'last_login_at' => now(),
         ]);
 
-        Member::create([
+        $member2Profile = Member::create([
             'user_id' => $member2->id,
             'member_code' => 'MBR-00002',
-            'join_date' => now(),
+            'join_date' => now()->subDays(20),
             'status' => 'active'
         ]);
 
@@ -81,18 +87,14 @@ class DatabaseSeeder extends Seeder
         // ========== FUNGSI UNTUK CEK GAMBAR ==========
         function getCoverPath($filename)
         {
-            // Cek di folder public/storage/covers/
-            $path = 'covers/' . $filename;
-            
-            // Jika file tidak ada, return null
-            if (!Storage::disk('public')->exists($path)) {
-                return null;
+            // Cek apakah file ada di storage/app/public/covers/
+            if (Storage::disk('public')->exists('covers/' . $filename)) {
+                return 'covers/' . $filename;
             }
-            
-            return $path;
+            return null;
         }
 
-        // ========== BUAT BUKU DENGAN GAMBAR ==========
+        // ========== BUAT BUKU (35 Buku) ==========
         $books = [
             // ===== 1. Fiksi (5 buku) =====
             [
@@ -228,7 +230,7 @@ class DatabaseSeeder extends Seeder
                 'isbn' => '978-602-1234-012',
                 'stock' => 6,
                 'category_id' => 3,
-                'cover' => getCoverPath('python_crash.png'),
+                'cover' => getCoverPath('python_crash.jpg'),
                 'description' => 'Belajar Python dengan cepat dan praktis untuk pemula hingga mahir.'
             ],
             [
@@ -505,5 +507,106 @@ class DatabaseSeeder extends Seeder
             $book['available_stock'] = $book['stock'];
             Book::create($book);
         }
+
+        // ========== BUAT TRANSAKSI DAN DENDA ==========
+        // Ambil semua buku dan member
+        $allBooks = Book::all();
+        $members = Member::all();
+
+        // Transaksi 1: John Doe - Sejarah Dunia (Terlambat 2 hari)
+        $transaction1 = Transaction::create([
+            'transaction_code' => 'TRX-20260702-436',
+            'member_id' => $member1Profile->id,
+            'book_id' => $allBooks->where('title', 'Sejarah Dunia yang Disembunyikan')->first()->id,
+            'borrow_date' => Carbon::now()->subDays(10),
+            'due_date' => Carbon::now()->subDays(2),
+            'return_date' => null,
+            'status' => 'borrowed',
+        ]);
+        $transaction1->book->decreaseStock();
+
+        // Denda untuk transaksi 1
+        Penalty::create([
+            'transaction_id' => $transaction1->id,
+            'member_id' => $member1Profile->id,
+            'days_late' => 2,
+            'fine_amount' => 4000,
+            'status' => 'unpaid',
+            'paid_date' => null,
+        ]);
+
+        // Transaksi 2: John Doe - Laravel 10 (Masih aman)
+        $transaction2 = Transaction::create([
+            'transaction_code' => 'TRX-20260702-166',
+            'member_id' => $member1Profile->id,
+            'book_id' => $allBooks->where('title', 'Laravel 10 untuk Pemula')->first()->id,
+            'borrow_date' => Carbon::now()->subDays(3),
+            'due_date' => Carbon::now()->addDays(4),
+            'return_date' => null,
+            'status' => 'borrowed',
+        ]);
+        $transaction2->book->decreaseStock();
+
+        // Transaksi 3: John Doe - Dunia Sophie (Jatuh tempo hari ini)
+        $transaction3 = Transaction::create([
+            'transaction_code' => 'TRX-20260702-748',
+            'member_id' => $member1Profile->id,
+            'book_id' => $allBooks->where('title', 'Dunia Sophie')->first()->id,
+            'borrow_date' => Carbon::now()->subDays(7),
+            'due_date' => Carbon::now(),
+            'return_date' => null,
+            'status' => 'borrowed',
+        ]);
+        $transaction3->book->decreaseStock();
+
+        // Transaksi 4: Jane Smith - Perahu Kertas (Terlambat 1 hari)
+        $transaction4 = Transaction::create([
+            'transaction_code' => 'TRX-20260702-725',
+            'member_id' => $member2Profile->id,
+            'book_id' => $allBooks->where('title', 'Perahu Kertas')->first()->id,
+            'borrow_date' => Carbon::now()->subDays(8),
+            'due_date' => Carbon::now()->subDays(1),
+            'return_date' => null,
+            'status' => 'borrowed',
+        ]);
+        $transaction4->book->decreaseStock();
+
+        // Denda untuk transaksi 4
+        Penalty::create([
+            'transaction_id' => $transaction4->id,
+            'member_id' => $member2Profile->id,
+            'days_late' => 1,
+            'fine_amount' => 2000,
+            'status' => 'unpaid',
+            'paid_date' => null,
+        ]);
+
+        // Transaksi 5: Jane Smith - Laskar Pelangi (Sudah dikembalikan, ada denda)
+        $transaction5 = Transaction::create([
+            'transaction_code' => 'TRX-20260701-100',
+            'member_id' => $member2Profile->id,
+            'book_id' => $allBooks->where('title', 'Laskar Pelangi')->first()->id,
+            'borrow_date' => Carbon::now()->subDays(14),
+            'due_date' => Carbon::now()->subDays(7),
+            'return_date' => Carbon::now()->subDays(6),
+            'status' => 'returned',
+        ]);
+        $transaction5->book->decreaseStock();
+        $transaction5->book->increaseStock(); // Kembalikan stok
+
+        // Denda untuk transaksi 5 (sudah lunas)
+        Penalty::create([
+            'transaction_id' => $transaction5->id,
+            'member_id' => $member2Profile->id,
+            'days_late' => 1,
+            'fine_amount' => 2000,
+            'status' => 'paid',
+            'paid_date' => Carbon::now()->subDays(5),
+        ]);
+
+        echo "Database seeded successfully!\n";
+        echo "Admin: admin@library.com / password123\n";
+        echo "Member 1: member@library.com / password123\n";
+        echo "Member 2: jane@example.com / password123\n";
     }
 }

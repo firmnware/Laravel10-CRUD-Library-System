@@ -9,12 +9,19 @@ use Symfony\Component\HttpFoundation\Response;
 
 class AdminMiddleware
 {
+    /**
+     * Handle an incoming request.
+     *
+     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     */
     public function handle(Request $request, Closure $next): Response
     {
+        // Cek apakah user sudah login
         if (!Auth::check()) {
-            return redirect('/login');
+            return redirect()->route('login');
         }
 
+        // Cek apakah user adalah admin
         if (!Auth::user()->isAdmin()) {
             abort(403, 'Akses ditolak! Hanya untuk Admin.');
         }

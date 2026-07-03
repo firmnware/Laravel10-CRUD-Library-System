@@ -4,8 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Transaction;
 use App\Models\Penalty;
-use App\Models\Book;
-use App\Models\Category;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class MemberDashboardController extends Controller
@@ -25,12 +24,12 @@ class MemberDashboardController extends Controller
             ->where('status', 'unpaid')
             ->sum('fine_amount');
         
-        $currentBorrows = Transaction::with('book')
+        $currentBorrows = Transaction::with('book', 'penalty')
             ->where('member_id', $member->id)
             ->where('status', 'borrowed')
             ->get();
         
-        $borrowHistory = Transaction::with('book')
+        $borrowHistory = Transaction::with('book', 'penalty')
             ->where('member_id', $member->id)
             ->orderBy('created_at', 'desc')
             ->limit(5)
@@ -45,7 +44,7 @@ class MemberDashboardController extends Controller
     public function myBorrows()
     {
         $member = Auth::user()->member;
-        $borrows = Transaction::with('book')
+        $borrows = Transaction::with('book', 'penalty')
             ->where('member_id', $member->id)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
