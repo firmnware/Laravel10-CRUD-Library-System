@@ -23,7 +23,7 @@
                 <table class="table table-bordered table-hover align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th>#</th>
+                            <th>No</th>
                             <th>Kode Member</th>
                             <th>Nama</th>
                             <th>Email</th>
@@ -72,7 +72,7 @@
                 </table>
             </div>
 
-            {{-- ✅ PAGINATION DENGAN STYLE BOOTSTRAP YANG LEBIH BAIK --}}
+            {{--  PAGINATION DENGAN STYLE BOOTSTRAP YANG LEBIH BAIK --}}
             <div class="d-flex justify-content-between align-items-center mt-4">
                 <div class="text-muted small">
                     <i class="fas fa-info-circle me-1"></i>

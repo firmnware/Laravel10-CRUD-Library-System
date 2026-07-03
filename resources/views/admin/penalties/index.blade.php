@@ -64,7 +64,7 @@
                 <table class="table table-bordered table-hover align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th>#</th>
+                            <th>No</th>
                             <th>Kode Transaksi</th>
                             <th>Member</th>
                             <th>Judul Buku</th>

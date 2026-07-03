@@ -81,7 +81,7 @@
                 <table class="table table-bordered table-hover align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th>#</th>
+                            <th>No</th>
                             <th>Cover</th>
                             <th>Judul Buku</th>
                             <th>Penulis</th>
