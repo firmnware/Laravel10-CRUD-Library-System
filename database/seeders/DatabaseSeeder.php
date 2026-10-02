@@ -2,16 +2,16 @@
 
 namespace Database\Seeders;
 
-use App\Models\Book;
-<<<<<<< Updated upstream
-=======
-use App\Models\Category;
-use App\Models\Member;
 use App\Models\User;
->>>>>>> Stashed changes
+use App\Models\Member;
+use App\Models\Category;
+use App\Models\Book;
+use App\Models\Transaction;
+use App\Models\Penalty;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class DatabaseSeeder extends Seeder
 {
@@ -20,71 +20,52 @@ class DatabaseSeeder extends Seeder
         // ========== BUAT ADMIN ==========
         $admin = User::create([
             'name' => 'Administrator',
-            'email' => 'admin@library.com',
+            'email' => 'admin@gmail.com',
             'password' => Hash::make('password123'),
             'role' => 'admin',
             'status' => 'active',
             'phone' => '081234567890',
             'address' => 'Jl. Admin No. 1',
+            'last_login_at' => now(),
         ]);
 
-        // ========== BUAT MEMBER ==========
-        $member1 = User::create([
-            'name' => 'John Doe',
-            'email' => 'member@library.com',
+        // ==========  BUAT MEMBER DEFAULT UNTUK LOGIN ==========
+        // Member 1: member@gmail.com
+        $memberDefault1 = User::create([
+            'name' => 'Member Default',
+            'email' => 'member@gmail.com',
             'password' => Hash::make('password123'),
             'role' => 'member',
             'status' => 'active',
             'phone' => '081234567891',
-<<<<<<< Updated upstream
-            'address' => 'Jl. Member No. 123',
-=======
             'address' => 'Jl. Member Default No. 1',
             'last_login_at' => now(),
->>>>>>> Stashed changes
-        ]);
+        ]); 
 
         Member::create([
-            'user_id' => $member1->id,
+            'user_id' => $memberDefault1->id,
             'member_code' => 'MBR-00001',
-<<<<<<< Updated upstream
-            'join_date' => now(),
-            'status' => 'active'
-=======
             'join_date' => now()->subDays(30),
-            'status' => 'active',
->>>>>>> Stashed changes
+            'status' => 'active'
         ]);
 
-        $member2 = User::create([
-            'name' => 'Jane Smith',
-            'email' => 'jane@example.com',
+        // Member 2: member2@gmail.com
+        $memberDefault2 = User::create([
+            'name' => 'Member Dua',
+            'email' => 'member2@gmail.com',
             'password' => Hash::make('password123'),
             'role' => 'member',
             'status' => 'active',
             'phone' => '081234567892',
-            'address' => 'Jl. Member No. 456',
+            'address' => 'Jl. Member Dua No. 2',
+            'last_login_at' => now(),
         ]);
 
         Member::create([
-            'user_id' => $member2->id,
+            'user_id' => $memberDefault2->id,
             'member_code' => 'MBR-00002',
-<<<<<<< Updated upstream
-            'join_date' => now(),
-            'status' => 'active'
-        ]);
-
-        // ========== BUAT 10 KATEGORI BUKU ==========
-        $categories = [
-            ['name' => 'Fiksi', 'description' => 'Buku cerita fiksi dan novel'],
-            ['name' => 'Non Fiksi', 'description' => 'Buku pengetahuan dan informasi'],
-            ['name' => 'Teknologi', 'description' => 'Buku tentang teknologi dan pemrograman'],
-            ['name' => 'Sains', 'description' => 'Buku ilmu pengetahuan alam'],
-            ['name' => 'Sejarah', 'description' => 'Buku tentang sejarah dan peradaban'],
-            ['name' => 'Bisnis', 'description' => 'Buku tentang bisnis dan kewirausahaan'],
-=======
             'join_date' => now()->subDays(20),
-            'status' => 'active',
+            'status' => 'active'
         ]);
 
         // ========== BUAT 20 MEMBER LAINNYA ==========
@@ -92,39 +73,40 @@ class DatabaseSeeder extends Seeder
             'Andi Pratama', 'Budi Santoso', 'Citra Dewi', 'Dian Sastro', 'Eko Prabowo',
             'Fitriani', 'Gunawan', 'Hendra', 'Indah', 'Joko Widodo',
             'Kartika', 'Lestari', 'Mulyono', 'Nadia', 'Oscar',
-            'Putri', 'Rahmat', 'Siti', 'Tono', 'Ujang',
+            'Putri', 'Rahmat', 'Siti', 'Tono', 'Ujang'
         ];
 
         $memberProfiles = [];
         for ($i = 0; $i < 20; $i++) {
             $name = $memberNames[$i];
-            $email = strtolower(str_replace(' ', '', $name)).'@gmail.com';
-
+            $email = strtolower(str_replace(' ', '', $name)) . '@gmail.com';
+            
             // Cek apakah email sudah ada (hindari duplikat dengan member default)
             if (User::where('email', $email)->exists()) {
                 continue;
             }
-
+            
             $user = User::create([
                 'name' => $name,
                 'email' => $email,
                 'password' => Hash::make('password123'),
                 'role' => 'member',
                 'status' => 'active',
-                'phone' => '08'.rand(1000000000, 9999999999),
-                'address' => 'Jl. '.$name.' No. '.rand(1, 100),
+                'phone' => '08' . rand(1000000000, 9999999999),
+                'address' => 'Jl. ' . $name . ' No. ' . rand(1, 100),
                 'last_login_at' => now()->subDays(rand(0, 30)),
             ]);
-
+    
             $member = Member::create([
                 'user_id' => $user->id,
-                'member_code' => 'MBR-'.str_pad($i + 3, 5, '0', STR_PAD_LEFT), // Mulai dari 00003
+                'member_code' => 'MBR-' . str_pad($i + 3, 5, '0', STR_PAD_LEFT), // Mulai dari 00003
                 'join_date' => now()->subDays(rand(1, 365)),
-                'status' => 'active',
+                'status' => 'active'
             ]);
-
+            
             $memberProfiles[] = $member;
         }
+        
 
         // ========== BUAT 15 KATEGORI BUKU ==========
         $categoryData = [
@@ -134,464 +116,51 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Sains', 'description' => 'Buku ilmu pengetahuan alam dan eksakta'],
             ['name' => 'Sejarah', 'description' => 'Buku tentang sejarah dan peradaban dunia'],
             ['name' => 'Bisnis', 'description' => 'Buku tentang bisnis, manajemen, dan kewirausahaan'],
->>>>>>> Stashed changes
             ['name' => 'Psikologi', 'description' => 'Buku tentang psikologi dan pengembangan diri'],
-            ['name' => 'Pendidikan', 'description' => 'Buku tentang pendidikan dan pembelajaran'],
-            ['name' => 'Kesehatan', 'description' => 'Buku tentang kesehatan dan gaya hidup'],
+            ['name' => 'Pendidikan', 'description' => 'Buku tentang pendidikan dan metode pembelajaran'],
+            ['name' => 'Kesehatan', 'description' => 'Buku tentang kesehatan dan gaya hidup sehat'],
             ['name' => 'Agama', 'description' => 'Buku tentang agama dan spiritualitas'],
+            ['name' => 'Filsafat', 'description' => 'Buku tentang filsafat dan pemikiran manusia'],
+            ['name' => 'Seni', 'description' => 'Buku tentang seni, musik, dan budaya'],
+            ['name' => 'Olahraga', 'description' => 'Buku tentang olahraga dan kebugaran'],
+            ['name' => 'Politik', 'description' => 'Buku tentang politik dan pemerintahan'],
+            ['name' => 'Ekonomi', 'description' => 'Buku tentang ekonomi dan keuangan'],
         ];
 
-        foreach ($categories as $cat) {
-            Category::create($cat);
+        $categoryIds = [];
+        foreach ($categoryData as $cat) {
+            $category = Category::create($cat);
+            $categoryIds[] = $category->id;
         }
 
         // ========== FUNGSI UNTUK CEK GAMBAR ==========
         function getCoverPath($filename)
         {
-<<<<<<< Updated upstream
-            // Cek di folder public/storage/covers/
+            //  PASTIKAN PATH BENAR
             $path = 'covers/' . $filename;
             
-            // Jika file tidak ada, return null
-            if (!Storage::disk('public')->exists($path)) {
-                return null;
-            }
-            
-            return $path;
-=======
-            //  PASTIKAN PATH BENAR
-            $path = 'covers/'.$filename;
-
             // Cek apakah file ada di storage/app/public/covers/
             if (Storage::disk('public')->exists($path)) {
                 return $path;
             }
-
+            
             // Jika tidak ada, return null (akan muncul placeholder)
             return null;
->>>>>>> Stashed changes
         }
 
-        // ========== BUAT BUKU DENGAN GAMBAR ==========
-        $books = [
-            // ===== 1. Fiksi (5 buku) =====
-            [
-                'title' => 'Dunia Sophie',
-                'author' => 'Jostein Gaarder',
-                'publisher' => 'Mizan',
-                'year' => 2019,
-                'isbn' => '978-602-1234-001',
-                'stock' => 5,
-                'category_id' => 1,
-                'cover' => getCoverPath('dunia_sophie.jpg'),
-                'description' => 'Novel filsafat yang mengisahkan perjalanan seorang gadis bernama Sophie dalam memahami dunia dan filsafat.'
-            ],
-            [
-                'title' => 'Laskar Pelangi',
-                'author' => 'Andrea Hirata',
-                'publisher' => 'Bentang Pustaka',
-                'year' => 2005,
-                'isbn' => '978-602-1234-002',
-                'stock' => 4,
-                'category_id' => 1,
-                'cover' => getCoverPath('laskar_pelangi.jpg'),
-                'description' => 'Kisah inspiratif tentang perjuangan 10 anak miskin di Belitung untuk mendapatkan pendidikan.'
-            ],
-            [
-                'title' => 'Bumi Manusia',
-                'author' => 'Pramoedya Ananta Toer',
-                'publisher' => 'Hasta Mitra',
-                'year' => 1980,
-                'isbn' => '978-602-1234-003',
-                'stock' => 3,
-                'category_id' => 1,
-                'cover' => getCoverPath('bumi_manusia.jpg'),
-                'description' => 'Novel sejarah yang menceritakan perjuangan pribumi melawan penjajahan Belanda.'
-            ],
-            [
-                'title' => 'Perahu Kertas',
-                'author' => 'Dee Lestari',
-                'publisher' => 'Bentang Pustaka',
-                'year' => 2009,
-                'isbn' => '978-602-1234-004',
-                'stock' => 4,
-                'category_id' => 1,
-                'cover' => getCoverPath('perahu_kertas.jpg'),
-                'description' => 'Kisah tentang mimpi, cinta, dan perjuangan dua anak muda dalam meraih impian.'
-            ],
-            [
-                'title' => 'Sang Pemimpi',
-                'author' => 'Andrea Hirata',
-                'publisher' => 'Bentang Pustaka',
-                'year' => 2006,
-                'isbn' => '978-602-1234-005',
-                'stock' => 3,
-                'category_id' => 1,
-                'cover' => getCoverPath('sang_pemimpi.jpg'),
-                'description' => 'Sekuel Laskar Pelangi yang mengisahkan perjuangan Ikal dan Arai di Belitung.'
-            ],
+        // ========== BUAT 151 BUKU (10 Buku per Kategori) ==========
+        $books = [];
 
-<<<<<<< Updated upstream
-            // ===== 2. Non Fiksi (5 buku) =====
-            [
-                'title' => 'Atomic Habits',
-                'author' => 'James Clear',
-                'publisher' => 'Gramedia',
-                'year' => 2020,
-                'isbn' => '978-602-1234-006',
-                'stock' => 6,
-                'category_id' => 2,
-                'cover' => getCoverPath('atomic_habits.jpg'),
-                'description' => 'Membangun kebiasaan kecil yang mengubah hidup secara fundamental.'
-            ],
-            [
-                'title' => 'Sapiens',
-                'author' => 'Yuval Noah Harari',
-                'publisher' => 'Harper',
-                'year' => 2014,
-                'isbn' => '978-602-1234-007',
-                'stock' => 4,
-                'category_id' => 2,
-                'cover' => getCoverPath('sapiens.jpg'),
-                'description' => 'Sejarah singkat umat manusia dari zaman purba hingga era modern.'
-            ],
-            [
-                'title' => 'The Power of Habit',
-                'author' => 'Charles Duhigg',
-                'publisher' => 'Random House',
-                'year' => 2012,
-                'isbn' => '978-602-1234-008',
-                'stock' => 3,
-                'category_id' => 2,
-                'cover' => getCoverPath('power_of_habit.jpg'),
-                'description' => 'Mengapa kita melakukan apa yang kita lakukan dan bagaimana mengubah kebiasaan.'
-            ],
-            [
-                'title' => 'The Art of War',
-                'author' => 'Sun Tzu',
-                'publisher' => 'Gramedia',
-                'year' => 2005,
-                'isbn' => '978-602-1234-009',
-                'stock' => 5,
-                'category_id' => 2,
-                'cover' => getCoverPath('art_of_war.jpg'),
-                'description' => 'Strategi perang kuno yang masih relevan untuk bisnis dan kehidupan modern.'
-            ],
-            [
-                'title' => 'Rich Dad Poor Dad',
-                'author' => 'Robert T. Kiyosaki',
-                'publisher' => 'PT. Bhuana Ilmu Populer',
-                'year' => 2017,
-                'isbn' => '978-602-1234-010',
-                'stock' => 4,
-                'category_id' => 2,
-                'cover' => getCoverPath('rich_dad_poor_dad.jpg'),
-                'description' => 'Pelajaran tentang finansial dan kebebasan ekonomi dari dua sosok ayah.'
-            ],
-
-            // ===== 3. Teknologi (4 buku) =====
-            [
-                'title' => 'Laravel 10 untuk Pemula',
-                'author' => 'Sandhika Galih',
-                'publisher' => 'Teknologi Press',
-                'year' => 2024,
-                'isbn' => '978-602-1234-011',
-                'stock' => 5,
-                'category_id' => 3,
-                'cover' => getCoverPath('laravel_10.png'),
-                'description' => 'Belajar Laravel dari dasar hingga mahir dengan studi kasus project nyata.'
-            ],
-            [
-                'title' => 'Python Crash Course',
-                'author' => 'Eric Matthes',
-                'publisher' => 'No Starch Press',
-                'year' => 2023,
-                'isbn' => '978-602-1234-012',
-                'stock' => 6,
-                'category_id' => 3,
-                'cover' => getCoverPath('python_crash.png'),
-                'description' => 'Belajar Python dengan cepat dan praktis untuk pemula hingga mahir.'
-            ],
-            [
-                'title' => 'Clean Code',
-                'author' => 'Robert C. Martin',
-                'publisher' => 'Prentice Hall',
-                'year' => 2008,
-                'isbn' => '978-602-1234-013',
-                'stock' => 3,
-                'category_id' => 3,
-                'cover' => getCoverPath('clean_code.jpg'),
-                'description' => 'Panduan menulis kode yang bersih, terstruktur, dan mudah dipelihara.'
-            ],
-            [
-                'title' => 'JavaScript: The Good Parts',
-                'author' => 'Douglas Crockford',
-                'publisher' => 'O\'Reilly Media',
-                'year' => 2008,
-                'isbn' => '978-602-1234-014',
-                'stock' => 4,
-                'category_id' => 3,
-                'cover' => getCoverPath('javascript_good_parts.jpg'),
-                'description' => 'Fokus pada fitur-fitur terbaik JavaScript untuk pengembangan web modern.'
-            ],
-
-            // ===== 4. Sains (3 buku) =====
-            [
-                'title' => 'A Brief History of Time',
-                'author' => 'Stephen Hawking',
-                'publisher' => 'Bantam Books',
-                'year' => 1988,
-                'isbn' => '978-602-1234-015',
-                'stock' => 3,
-                'category_id' => 4,
-                'cover' => getCoverPath('brief_history_time.jpg'),
-                'description' => 'Penjelasan tentang alam semesta, lubang hitam, dan teori relativitas.'
-            ],
-            [
-                'title' => 'The Selfish Gene',
-                'author' => 'Richard Dawkins',
-                'publisher' => 'Oxford University Press',
-                'year' => 1976,
-                'isbn' => '978-602-1234-016',
-                'stock' => 4,
-                'category_id' => 4,
-                'cover' => getCoverPath('selfish_gene.jpg'),
-                'description' => 'Teori evolusi dari perspektif gen yang egois.'
-            ],
-            [
-                'title' => 'Cosmos',
-                'author' => 'Carl Sagan',
-                'publisher' => 'Random House',
-                'year' => 1980,
-                'isbn' => '978-602-1234-017',
-                'stock' => 3,
-                'category_id' => 4,
-                'cover' => getCoverPath('cosmos.jpg'),
-                'description' => 'Perjalanan menjelajahi alam semesta dan tempat manusia di dalamnya.'
-            ],
-
-            // ===== 5. Sejarah (3 buku) =====
-            [
-                'title' => 'Sejarah Dunia yang Disembunyikan',
-                'author' => 'John Doe',
-                'publisher' => 'Pustaka Utama',
-                'year' => 2021,
-                'isbn' => '978-602-1234-018',
-                'stock' => 5,
-                'category_id' => 5,
-                'cover' => getCoverPath('sejarah_dunia.jpg'),
-                'description' => 'Fakta-fakta menarik tentang sejarah dunia yang jarang diketahui.'
-            ],
-            [
-                'title' => 'Indonesia: Sejarah Awal',
-                'author' => 'M.C. Ricklefs',
-                'publisher' => 'Gramedia',
-                'year' => 2008,
-                'isbn' => '978-602-1234-019',
-                'stock' => 3,
-                'category_id' => 5,
-                'cover' => getCoverPath('indonesia_sejarah.jpg'),
-                'description' => 'Sejarah Indonesia dari masa pra-sejarah hingga kemerdekaan.'
-            ],
-            [
-                'title' => 'The Silk Roads',
-                'author' => 'Peter Frankopan',
-                'publisher' => 'Bloomsbury',
-                'year' => 2015,
-                'isbn' => '978-602-1234-020',
-                'stock' => 4,
-                'category_id' => 5,
-                'cover' => getCoverPath('silk_roads.jpg'),
-                'description' => 'Sejarah dunia melalui jalur sutra dan peradaban timur.'
-            ],
-
-            // ===== 6. Bisnis (3 buku) =====
-            [
-                'title' => 'The Lean Startup',
-                'author' => 'Eric Ries',
-                'publisher' => 'Crown Business',
-                'year' => 2011,
-                'isbn' => '978-602-1234-021',
-                'stock' => 4,
-                'category_id' => 6,
-                'cover' => getCoverPath('lean_startup.jpg'),
-                'description' => 'Metodologi untuk memulai bisnis dengan efisien dan mengurangi risiko.'
-            ],
-            [
-                'title' => 'Zero to One',
-                'author' => 'Peter Thiel',
-                'publisher' => 'Crown Business',
-                'year' => 2014,
-                'isbn' => '978-602-1234-022',
-                'stock' => 3,
-                'category_id' => 6,
-                'cover' => getCoverPath('zero_to_one.jpg'),
-                'description' => 'Catatan tentang startup dan bagaimana menciptakan masa depan.'
-            ],
-            [
-                'title' => 'Good to Great',
-                'author' => 'Jim Collins',
-                'publisher' => 'HarperBusiness',
-                'year' => 2001,
-                'isbn' => '978-602-1234-023',
-                'stock' => 3,
-                'category_id' => 6,
-                'cover' => getCoverPath('good_to_great.jpg'),
-                'description' => 'Mengapa beberapa perusahaan menjadi hebat dan yang lainnya tidak.'
-            ],
-
-            // ===== 7. Psikologi (3 buku) =====
-            [
-                'title' => 'Thinking, Fast and Slow',
-                'author' => 'Daniel Kahneman',
-                'publisher' => 'Farrar, Straus and Giroux',
-                'year' => 2011,
-                'isbn' => '978-602-1234-024',
-                'stock' => 4,
-                'category_id' => 7,
-                'cover' => getCoverPath('thinking_fast_slow.jpg'),
-                'description' => 'Dua sistem pemikiran manusia dan bagaimana mereka mempengaruhi keputusan.'
-            ],
-            [
-                'title' => 'Mindset',
-                'author' => 'Carol S. Dweck',
-                'publisher' => 'Random House',
-                'year' => 2006,
-                'isbn' => '978-602-1234-025',
-                'stock' => 3,
-                'category_id' => 7,
-                'cover' => getCoverPath('mindset.jpg'),
-                'description' => 'Psikologi kesuksesan dan perbedaan antara mindset tetap dan berkembang.'
-            ],
-            [
-                'title' => 'The Psychology of Money',
-                'author' => 'Morgan Housel',
-                'publisher' => 'Harriman House',
-                'year' => 2020,
-                'isbn' => '978-602-1234-026',
-                'stock' => 5,
-                'category_id' => 7,
-                'cover' => getCoverPath('psychology_money.jpg'),
-                'description' => 'Hubungan antara psikologi manusia dan keputusan keuangan.'
-            ],
-
-            // ===== 8. Pendidikan (3 buku) =====
-            [
-                'title' => 'Pendidikan Anak Usia Dini',
-                'author' => 'Dr. Montessori',
-                'publisher' => 'Pustaka Pendidikan',
-                'year' => 2019,
-                'isbn' => '978-602-1234-027',
-                'stock' => 4,
-                'category_id' => 8,
-                'cover' => getCoverPath('pendidikan_anak.jpg'),
-                'description' => 'Metode pendidikan untuk anak usia dini berbasis Montessori.'
-            ],
-            [
-                'title' => 'The Teacher\'s Guide',
-                'author' => 'John Hattie',
-                'publisher' => 'Routledge',
-                'year' => 2012,
-                'isbn' => '978-602-1234-028',
-                'stock' => 3,
-                'category_id' => 8,
-                'cover' => getCoverPath('teachers_guide.jpg'),
-                'description' => 'Panduan praktis untuk guru dalam meningkatkan kualitas pembelajaran.'
-            ],
-            [
-                'title' => 'Learning How to Learn',
-                'author' => 'Barbara Oakley',
-                'publisher' => 'TarcherPerigee',
-                'year' => 2018,
-                'isbn' => '978-602-1234-029',
-                'stock' => 3,
-                'category_id' => 8,
-                'cover' => getCoverPath('learning_how_to_learn.jpg'),
-                'description' => 'Strategi efektif untuk belajar dan menguasai materi dengan cepat.'
-            ],
-
-            // ===== 9. Kesehatan (3 buku) =====
-            [
-                'title' => 'Why We Sleep',
-                'author' => 'Matthew Walker',
-                'publisher' => 'Scribner',
-                'year' => 2017,
-                'isbn' => '978-602-1234-030',
-                'stock' => 4,
-                'category_id' => 9,
-                'cover' => getCoverPath('why_we_sleep.jpg'),
-                'description' => 'Eksplorasi tentang pentingnya tidur bagi kesehatan fisik dan mental.'
-            ],
-            [
-                'title' => 'The Blue Zones',
-                'author' => 'Dan Buettner',
-                'publisher' => 'National Geographic',
-                'year' => 2008,
-                'isbn' => '978-602-1234-031',
-                'stock' => 3,
-                'category_id' => 9,
-                'cover' => getCoverPath('blue_zones.jpg'),
-                'description' => 'Rahasia kesehatan dan umur panjang dari 5 zona biru di dunia.'
-            ],
-            [
-                'title' => 'Eat, Move, Sleep',
-                'author' => 'Tom Rath',
-                'publisher' => 'Missionday',
-                'year' => 2013,
-                'isbn' => '978-602-1234-032',
-                'stock' => 3,
-                'category_id' => 9,
-                'cover' => getCoverPath('eat_move_sleep.jpg'),
-                'description' => 'Panduan hidup sehat melalui pola makan, gerakan, dan tidur yang baik.'
-            ],
-
-            // ===== 10. Agama (3 buku) =====
-            [
-                'title' => 'The Power of Now',
-                'author' => 'Eckhart Tolle',
-                'publisher' => 'New World Library',
-                'year' => 1997,
-                'isbn' => '978-602-1234-033',
-                'stock' => 4,
-                'category_id' => 10,
-                'cover' => getCoverPath('power_of_now.jpg'),
-                'description' => 'Panduan spiritual untuk hidup di masa sekarang dan menemukan kedamaian.'
-            ],
-            [
-                'title' => 'The Purpose Driven Life',
-                'author' => 'Rick Warren',
-                'publisher' => 'Zondervan',
-                'year' => 2002,
-                'isbn' => '978-602-1234-034',
-                'stock' => 3,
-                'category_id' => 10,
-                'cover' => getCoverPath('purpose_driven_life.jpg'),
-                'description' => 'Menemukan tujuan hidup melalui perspektif agama dan spiritualitas.'
-            ],
-            [
-                'title' => 'Muhammad: A Prophet for Our Time',
-                'author' => 'Karen Armstrong',
-                'publisher' => 'HarperOne',
-                'year' => 2006,
-                'isbn' => '978-602-1234-035',
-                'stock' => 3,
-                'category_id' => 10,
-                'cover' => getCoverPath('muhammad_prophet.jpg'),
-                'description' => 'Biografi Nabi Muhammad SAW dan pesannya untuk dunia modern.'
-            ],
-        ];
-
-=======
         // ===== 1. Fiksi (ID: 1) - 10 Buku =====
         $fiksiBooks = [
-            ['title' => 'Dunia Sophie',
-                'author' => 'Jostein Gaarder',
-                'publisher' => 'Mizan',
-                'year' => 2019,
-                'isbn' => '978-602-1234-001',
-                'stock' => 5,
-                'cover' => 'dunia_sophie.jpg'],
-
+            ['title' => 'Dunia Sophie', 
+            'author' => 'Jostein Gaarder', 
+            'publisher' => 'Mizan', 
+            'year' => 2019, 
+            'isbn' => '978-602-1234-001', 
+            'stock' => 5, 
+            'cover' => 'dunia_sophie.jpg'],
+            
             ['title' => 'Laskar Pelangi', 'author' => 'Andrea Hirata', 'publisher' => 'Bentang Pustaka', 'year' => 2005, 'isbn' => '978-602-1234-002', 'stock' => 4, 'cover' => 'laskar_pelangi.jpg'],
             ['title' => 'Bumi Manusia', 'author' => 'Pramoedya Ananta Toer', 'publisher' => 'Hasta Mitra', 'year' => 1980, 'isbn' => '978-602-1234-003', 'stock' => 3, 'cover' => 'bumi_manusia.jpg'],
             ['title' => 'Perahu Kertas', 'author' => 'Dee Lestari', 'publisher' => 'Bentang Pustaka', 'year' => 2009, 'isbn' => '978-602-1234-004', 'stock' => 4, 'cover' => 'perahu_kertas.jpg'],
@@ -605,7 +174,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($fiksiBooks as $book) {
             $book['category_id'] = $categoryIds[0];
-            $book['description'] = 'Buku fiksi menarik tentang '.$book['title'];
+            $book['description'] = 'Buku fiksi menarik tentang ' . $book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -626,7 +195,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($nonFiksiBooks as $book) {
             $book['category_id'] = $categoryIds[1];
-            $book['description'] = 'Buku non-fiksi tentang '.$book['title'];
+            $book['description'] = 'Buku non-fiksi tentang ' . $book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -647,7 +216,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($teknologiBooks as $book) {
             $book['category_id'] = $categoryIds[2];
-            $book['description'] = 'Buku teknologi tentang '.$book['title'];
+            $book['description'] = 'Buku teknologi tentang ' . $book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -668,7 +237,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($sainsBooks as $book) {
             $book['category_id'] = $categoryIds[3];
-            $book['description'] = 'Buku sains tentang '.$book['title'];
+            $book['description'] = 'Buku sains tentang ' . $book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -690,7 +259,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($sejarahBooks as $book) {
             $book['category_id'] = $categoryIds[4];
-            $book['description'] = 'Buku sejarah tentang '.$book['title'];
+            $book['description'] = 'Buku sejarah tentang ' . $book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -711,7 +280,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($bisnisBooks as $book) {
             $book['category_id'] = $categoryIds[5];
-            $book['description'] = 'Buku bisnis tentang '.$book['title'];
+            $book['description'] = 'Buku bisnis tentang ' . $book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -732,7 +301,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($psikologiBooks as $book) {
             $book['category_id'] = $categoryIds[6];
-            $book['description'] = 'Buku psikologi tentang '.$book['title'];
+            $book['description'] = 'Buku psikologi tentang ' . $book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -753,7 +322,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($pendidikanBooks as $book) {
             $book['category_id'] = $categoryIds[7];
-            $book['description'] = 'Buku pendidikan tentang '.$book['title'];
+            $book['description'] = 'Buku pendidikan tentang ' . $book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -774,7 +343,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($kesehatanBooks as $book) {
             $book['category_id'] = $categoryIds[8];
-            $book['description'] = 'Buku kesehatan tentang '.$book['title'];
+            $book['description'] = 'Buku kesehatan tentang ' . $book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -795,7 +364,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($agamaBooks as $book) {
             $book['category_id'] = $categoryIds[9];
-            $book['description'] = 'Buku agama tentang '.$book['title'];
+            $book['description'] = 'Buku agama tentang ' . $book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -816,7 +385,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($filsafatBooks as $book) {
             $book['category_id'] = $categoryIds[10];
-            $book['description'] = 'Buku filsafat tentang '.$book['title'];
+            $book['description'] = 'Buku filsafat tentang ' . $book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -837,7 +406,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($seniBooks as $book) {
             $book['category_id'] = $categoryIds[11];
-            $book['description'] = 'Buku seni tentang '.$book['title'];
+            $book['description'] = 'Buku seni tentang ' . $book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -858,7 +427,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($olahragaBooks as $book) {
             $book['category_id'] = $categoryIds[12];
-            $book['description'] = 'Buku olahraga tentang '.$book['title'];
+            $book['description'] = 'Buku olahraga tentang ' . $book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -879,7 +448,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($politikBooks as $book) {
             $book['category_id'] = $categoryIds[13];
-            $book['description'] = 'Buku politik tentang '.$book['title'];
+            $book['description'] = 'Buku politik tentang ' . $book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -900,12 +469,11 @@ class DatabaseSeeder extends Seeder
 
         foreach ($ekonomiBooks as $book) {
             $book['category_id'] = $categoryIds[14];
-            $book['description'] = 'Buku ekonomi tentang '.$book['title'];
+            $book['description'] = 'Buku ekonomi tentang ' . $book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
 
->>>>>>> Stashed changes
         // ========== SIMPAN DATA BUKU ==========
         foreach ($books as $book) {
             $book['available_stock'] = $book['stock'];

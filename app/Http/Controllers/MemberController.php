@@ -9,9 +9,33 @@ use Illuminate\Support\Facades\Hash;
 
 class MemberController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $members = Member::with('user')->latest()->paginate(10);
+        $query = Member::with('user');
+
+        // Filter berdasarkan status member
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Search berdasarkan kode member, nama, email, no. telepon
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('member_code', 'like', '%'.$search.'%')
+                    ->orWhereHas('user', function ($uq) use ($search) {
+                        $uq->where('name', 'like', '%'.$search.'%')
+                            ->orWhere('email', 'like', '%'.$search.'%')
+                            ->orWhere('phone', 'like', '%'.$search.'%');
+                    });
+            });
+        }
+
+        $members = $query->latest()->paginate(10);
+
+        // Menambahkan query string ke pagination
+        $members->appends(request()->query());
+
         return view('admin.members.index', compact('members'));
     }
 
@@ -26,7 +50,7 @@ class MemberController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
             'password' => 'required|min:6',
-            'phone' => 'nullable|string',
+            'phone' => 'nullable|string|max:15',
             'address' => 'nullable|string',
         ]);
 
@@ -40,11 +64,12 @@ class MemberController extends Controller
             'address' => $request->address,
         ]);
 
+        // Kode member dihasilkan otomatis oleh Member::booted() (C2)
+        // agar tidak tabrakan dengan formula berbeda di tempat lain.
         Member::create([
             'user_id' => $user->id,
-            'member_code' => 'MBR-' . str_pad(Member::count() + 1, 5, '0', STR_PAD_LEFT),
             'join_date' => now(),
-            'status' => 'active'
+            'status' => 'active',
         ]);
 
         return redirect()->route('admin.members.index')->with('success', 'Member berhasil ditambahkan');
@@ -52,11 +77,16 @@ class MemberController extends Controller
 
     public function toggleStatus(Member $member)
     {
+        // C6: mapping dua kolom harus sinkron —
+        //   members.status = active  <-> users.status = active
+        //   members.status = blocked  <-> users.status = inactive
+        // (users.status inilah yang dicegah MemberMiddleware/AdminMiddleware.)
         $newStatus = $member->status === 'active' ? 'blocked' : 'active';
         $member->update(['status' => $newStatus]);
         $member->user->update(['status' => $newStatus === 'active' ? 'active' : 'inactive']);
 
         $message = $newStatus === 'active' ? 'Member diaktifkan' : 'Member diblokir';
+
         return redirect()->route('admin.members.index')->with('success', $message);
     }
 }

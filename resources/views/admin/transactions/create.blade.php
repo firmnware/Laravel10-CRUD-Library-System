@@ -18,40 +18,29 @@
         <form action="{{ route('admin.transactions.store') }}" method="POST" id="borrowForm">
             @csrf
             <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-semibold">Pilih Member <span class="text-danger">*</span></label>
-                    <select name="member_id" class="form-control @error('member_id') is-invalid @enderror" required>
-                        <option value="">-- Pilih Member --</option>
+                <div class="col-md-12 mb-3">
+                    <label class="form-label fw-semibold">Cari Member <span class="text-danger">*</span></label>
+                    <select name="member_id" id="member_select" class="form-control @error('member_id') is-invalid @enderror" required>
+                        <option value="">-- Ketik nama, kode, email, atau no. HP --</option>
                         @foreach($members as $member)
                             <option value="{{ $member->id }}" {{ old('member_id') == $member->id ? 'selected' : '' }}>
-                                {{ $member->user->name }} ({{ $member->member_code }})
+                                {{ $member->user->name }} ({{ $member->member_code }}) - {{ $member->user->email }}{{ $member->user->phone ? ' - '.$member->user->phone : '' }}
                             </option>
                         @endforeach
                     </select>
                     @error('member_id')
                         <span class="invalid-feedback">{{ $message }}</span>
                     @enderror
+                    <small class="text-muted">Ketik untuk mencari member</small>
                 </div>
 
-                <!--  KATEGORI BUKU -->
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-semibold">Kategori Buku</label>
-                    <select id="category_filter" class="form-control">
-                        <option value="">-- Semua Kategori --</option>
-                        @foreach($categories as $category)
-                            <option value="{{ $category->id }}">{{ $category->name }}</option>
-                        @endforeach
-                    </select>
-                    <small class="text-muted">Pilih kategori untuk menyaring daftar buku</small>
-                </div>
-
-                <!--  DAFTAR BUKU (Terintegrasi dengan Kategori) -->
+                <!--  CARI BUKU (kategori ikut di keyword, dropdown kategori dihapus) -->
                 <div class="col-md-12 mb-3">
-                    <label class="form-label fw-semibold">Pilih Buku <span class="text-danger">*</span></label>
-                    <select name="book_id" id="book_list" class="form-control @error('book_id') is-invalid @enderror" required>
-                        <option value="">-- Pilih Buku --</option>
+                    <label class="form-label fw-semibold">Cari Buku <span class="text-danger">*</span></label>
+                    <select name="book_id" id="book_select" class="form-control @error('book_id') is-invalid @enderror" required>
+                        <option value="">-- Ketik judul atau kategori buku --</option>
                         @foreach($books as $book)
-                            <option value="{{ $book->id }}" data-category="{{ $book->category_id }}" 
+                            <option value="{{ $book->id }}"
                                     {{ old('book_id') == $book->id ? 'selected' : '' }}>
                                 {{ $book->title }} (Stok: {{ $book->available_stock }}) - {{ $book->category->name ?? 'Tanpa Kategori' }}
                             </option>
@@ -101,71 +90,21 @@
 </div>
 
 @push('scripts')
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const categoryFilter = document.getElementById('category_filter');
-        const bookList = document.getElementById('book_list');
-        const bookCount = document.getElementById('book_count');
-        const allBooks = bookList.querySelectorAll('option');
-
-        //  Fungsi filter buku berdasarkan kategori
-        function filterBooksByCategory(categoryId) {
-            let visibleCount = 0;
-            
-            // Reset semua option
-            allBooks.forEach(option => {
-                // Skip option pertama (placeholder)
-                if (option.value === '') {
-                    option.style.display = 'block';
-                    return;
-                }
-                
-                const bookCategory = option.getAttribute('data-category');
-                
-                if (categoryId === '' || categoryId === null || bookCategory == categoryId) {
-                    option.style.display = 'block';
-                    visibleCount++;
-                } else {
-                    option.style.display = 'none';
-                }
-            });
-
-            // Update jumlah buku
-            bookCount.textContent = `Total buku tersedia: ${visibleCount}`;
-
-            // Reset pilihan jika buku yang dipilih tidak terlihat
-            const selectedOption = bookList.options[bookList.selectedIndex];
-            if (selectedOption && selectedOption.value !== '' && selectedOption.style.display === 'none') {
-                bookList.value = '';
-            }
-        }
-
-        //  Event listener untuk perubahan kategori
-        categoryFilter.addEventListener('change', function() {
-            const categoryId = this.value;
-            filterBooksByCategory(categoryId);
+        new TomSelect('#member_select', {
+            create: false,
+            sortField: { field: 'text', direction: 'asc' },
+            placeholder: '-- Ketik nama, kode, email, atau no. HP --',
         });
 
-        //  Cek old value untuk book_id dan set kategori yang sesuai
-        const oldBookId = "{{ old('book_id') }}";
-        if (oldBookId) {
-            // Cari option yang memiliki value = oldBookId
-            const selectedOption = bookList.querySelector(`option[value="${oldBookId}"]`);
-            if (selectedOption) {
-                const categoryId = selectedOption.getAttribute('data-category');
-                if (categoryId) {
-                    // Set kategori filter sesuai dengan buku yang dipilih
-                    categoryFilter.value = categoryId;
-                    filterBooksByCategory(categoryId);
-                    
-                    // Set selected option
-                    bookList.value = oldBookId;
-                }
-            }
-        } else {
-            //  Jika tidak ada old value, tampilkan semua buku
-            filterBooksByCategory('');
-        }
+        new TomSelect('#book_select', {
+            create: false,
+            sortField: { field: 'text', direction: 'asc' },
+            placeholder: '-- Ketik judul atau kategori buku --',
+        });
     });
 </script>
 @endpush
