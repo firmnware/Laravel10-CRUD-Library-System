@@ -10,14 +10,9 @@ use Illuminate\Support\Str;
 
 class BookController extends Controller
 {
-    // ========== ADMIN: LIHAT SEMUA BUKU (Tanpa Pagination) ==========
-    public function index()
+    // ========== ADMIN: LIHAT SEMUA BUKU (DENGAN SEARCH & FILTER + PAGINATION 20) ==========
+    public function index(Request $request)
     {
-<<<<<<< Updated upstream
-        // ✅ Ambil SEMUA buku tanpa pagination
-        $books = Book::with('category')->latest()->get();
-        return view('admin.books.index', compact('books'));
-=======
         // Ambil semua kategori untuk dropdown filter
         $categories = Category::all();
 
@@ -46,17 +41,11 @@ class BookController extends Controller
         $books->appends(request()->query());
 
         return view('admin.books.index', compact('books', 'categories'));
->>>>>>> Stashed changes
     }
 
-    // ========== MEMBER: LIHAT SEMUA BUKU (Tanpa Pagination) ==========
-    public function memberIndex()
+    // ========== MEMBER: LIHAT KATALOG BUKU (DENGAN SEARCH & FILTER + PAGINATION 20) ==========
+    public function memberIndex(Request $request)
     {
-<<<<<<< Updated upstream
-        // ✅ Ambil SEMUA buku tanpa pagination
-        $books = Book::with('category')->latest()->get();
-        return view('member.books.index', compact('books'));
-=======
         $categories = Category::all();
         $query = Book::with('category');
 
@@ -78,7 +67,6 @@ class BookController extends Controller
         $books->appends(request()->query());
 
         return view('member.books.index', compact('books', 'categories'));
->>>>>>> Stashed changes
     }
 
     // ========== TAMPILKAN FORM TAMBAH ==========

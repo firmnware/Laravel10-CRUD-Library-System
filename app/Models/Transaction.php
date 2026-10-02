@@ -48,9 +48,6 @@ class Transaction extends Model
     {
         return 'TRX-'.date('Ymd').'-'.strtoupper(Str::random(6));
     }
-<<<<<<< Updated upstream
-}
-=======
 
     //  CEK APAKAH TRANSAKSI MEMILIKI DENDA (REAL-TIME)
     public function getHasFineAttribute()
@@ -182,4 +179,3 @@ class Transaction extends Model
         return null;
     }
 }
->>>>>>> Stashed changes

@@ -2,16 +2,13 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Models\Member;
-use App\Models\Category;
 use App\Models\Book;
-use App\Models\Transaction;
-use App\Models\Penalty;
+use App\Models\Category;
+use App\Models\Member;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
-use Carbon\Carbon;
 
 class DatabaseSeeder extends Seeder
 {
@@ -40,13 +37,13 @@ class DatabaseSeeder extends Seeder
             'phone' => '081234567891',
             'address' => 'Jl. Member Default No. 1',
             'last_login_at' => now(),
-        ]); 
+        ]);
 
         Member::create([
             'user_id' => $memberDefault1->id,
             'member_code' => 'MBR-00001',
             'join_date' => now()->subDays(30),
-            'status' => 'active'
+            'status' => 'active',
         ]);
 
         // Member 2: member2@gmail.com
@@ -65,7 +62,7 @@ class DatabaseSeeder extends Seeder
             'user_id' => $memberDefault2->id,
             'member_code' => 'MBR-00002',
             'join_date' => now()->subDays(20),
-            'status' => 'active'
+            'status' => 'active',
         ]);
 
         // ========== BUAT 20 MEMBER LAINNYA ==========
@@ -73,40 +70,39 @@ class DatabaseSeeder extends Seeder
             'Andi Pratama', 'Budi Santoso', 'Citra Dewi', 'Dian Sastro', 'Eko Prabowo',
             'Fitriani', 'Gunawan', 'Hendra', 'Indah', 'Joko Widodo',
             'Kartika', 'Lestari', 'Mulyono', 'Nadia', 'Oscar',
-            'Putri', 'Rahmat', 'Siti', 'Tono', 'Ujang'
+            'Putri', 'Rahmat', 'Siti', 'Tono', 'Ujang',
         ];
 
         $memberProfiles = [];
         for ($i = 0; $i < 20; $i++) {
             $name = $memberNames[$i];
-            $email = strtolower(str_replace(' ', '', $name)) . '@gmail.com';
-            
+            $email = strtolower(str_replace(' ', '', $name)).'@gmail.com';
+
             // Cek apakah email sudah ada (hindari duplikat dengan member default)
             if (User::where('email', $email)->exists()) {
                 continue;
             }
-            
+
             $user = User::create([
                 'name' => $name,
                 'email' => $email,
                 'password' => Hash::make('password123'),
                 'role' => 'member',
                 'status' => 'active',
-                'phone' => '08' . rand(1000000000, 9999999999),
-                'address' => 'Jl. ' . $name . ' No. ' . rand(1, 100),
+                'phone' => '08'.rand(1000000000, 9999999999),
+                'address' => 'Jl. '.$name.' No. '.rand(1, 100),
                 'last_login_at' => now()->subDays(rand(0, 30)),
             ]);
-    
+
             $member = Member::create([
                 'user_id' => $user->id,
-                'member_code' => 'MBR-' . str_pad($i + 3, 5, '0', STR_PAD_LEFT), // Mulai dari 00003
+                'member_code' => 'MBR-'.str_pad($i + 3, 5, '0', STR_PAD_LEFT), // Mulai dari 00003
                 'join_date' => now()->subDays(rand(1, 365)),
-                'status' => 'active'
+                'status' => 'active',
             ]);
-            
+
             $memberProfiles[] = $member;
         }
-        
 
         // ========== BUAT 15 KATEGORI BUKU ==========
         $categoryData = [
@@ -137,13 +133,13 @@ class DatabaseSeeder extends Seeder
         function getCoverPath($filename)
         {
             //  PASTIKAN PATH BENAR
-            $path = 'covers/' . $filename;
-            
+            $path = 'covers/'.$filename;
+
             // Cek apakah file ada di storage/app/public/covers/
             if (Storage::disk('public')->exists($path)) {
                 return $path;
             }
-            
+
             // Jika tidak ada, return null (akan muncul placeholder)
             return null;
         }
@@ -153,14 +149,14 @@ class DatabaseSeeder extends Seeder
 
         // ===== 1. Fiksi (ID: 1) - 10 Buku =====
         $fiksiBooks = [
-            ['title' => 'Dunia Sophie', 
-            'author' => 'Jostein Gaarder', 
-            'publisher' => 'Mizan', 
-            'year' => 2019, 
-            'isbn' => '978-602-1234-001', 
-            'stock' => 5, 
-            'cover' => 'dunia_sophie.jpg'],
-            
+            ['title' => 'Dunia Sophie',
+                'author' => 'Jostein Gaarder',
+                'publisher' => 'Mizan',
+                'year' => 2019,
+                'isbn' => '978-602-1234-001',
+                'stock' => 5,
+                'cover' => 'dunia_sophie.jpg'],
+
             ['title' => 'Laskar Pelangi', 'author' => 'Andrea Hirata', 'publisher' => 'Bentang Pustaka', 'year' => 2005, 'isbn' => '978-602-1234-002', 'stock' => 4, 'cover' => 'laskar_pelangi.jpg'],
             ['title' => 'Bumi Manusia', 'author' => 'Pramoedya Ananta Toer', 'publisher' => 'Hasta Mitra', 'year' => 1980, 'isbn' => '978-602-1234-003', 'stock' => 3, 'cover' => 'bumi_manusia.jpg'],
             ['title' => 'Perahu Kertas', 'author' => 'Dee Lestari', 'publisher' => 'Bentang Pustaka', 'year' => 2009, 'isbn' => '978-602-1234-004', 'stock' => 4, 'cover' => 'perahu_kertas.jpg'],
@@ -174,7 +170,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($fiksiBooks as $book) {
             $book['category_id'] = $categoryIds[0];
-            $book['description'] = 'Buku fiksi menarik tentang ' . $book['title'];
+            $book['description'] = 'Buku fiksi menarik tentang '.$book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -195,7 +191,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($nonFiksiBooks as $book) {
             $book['category_id'] = $categoryIds[1];
-            $book['description'] = 'Buku non-fiksi tentang ' . $book['title'];
+            $book['description'] = 'Buku non-fiksi tentang '.$book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -216,7 +212,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($teknologiBooks as $book) {
             $book['category_id'] = $categoryIds[2];
-            $book['description'] = 'Buku teknologi tentang ' . $book['title'];
+            $book['description'] = 'Buku teknologi tentang '.$book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -237,7 +233,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($sainsBooks as $book) {
             $book['category_id'] = $categoryIds[3];
-            $book['description'] = 'Buku sains tentang ' . $book['title'];
+            $book['description'] = 'Buku sains tentang '.$book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -259,7 +255,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($sejarahBooks as $book) {
             $book['category_id'] = $categoryIds[4];
-            $book['description'] = 'Buku sejarah tentang ' . $book['title'];
+            $book['description'] = 'Buku sejarah tentang '.$book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -280,7 +276,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($bisnisBooks as $book) {
             $book['category_id'] = $categoryIds[5];
-            $book['description'] = 'Buku bisnis tentang ' . $book['title'];
+            $book['description'] = 'Buku bisnis tentang '.$book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -301,7 +297,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($psikologiBooks as $book) {
             $book['category_id'] = $categoryIds[6];
-            $book['description'] = 'Buku psikologi tentang ' . $book['title'];
+            $book['description'] = 'Buku psikologi tentang '.$book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -322,7 +318,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($pendidikanBooks as $book) {
             $book['category_id'] = $categoryIds[7];
-            $book['description'] = 'Buku pendidikan tentang ' . $book['title'];
+            $book['description'] = 'Buku pendidikan tentang '.$book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -343,7 +339,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($kesehatanBooks as $book) {
             $book['category_id'] = $categoryIds[8];
-            $book['description'] = 'Buku kesehatan tentang ' . $book['title'];
+            $book['description'] = 'Buku kesehatan tentang '.$book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -364,7 +360,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($agamaBooks as $book) {
             $book['category_id'] = $categoryIds[9];
-            $book['description'] = 'Buku agama tentang ' . $book['title'];
+            $book['description'] = 'Buku agama tentang '.$book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -385,7 +381,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($filsafatBooks as $book) {
             $book['category_id'] = $categoryIds[10];
-            $book['description'] = 'Buku filsafat tentang ' . $book['title'];
+            $book['description'] = 'Buku filsafat tentang '.$book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -406,7 +402,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($seniBooks as $book) {
             $book['category_id'] = $categoryIds[11];
-            $book['description'] = 'Buku seni tentang ' . $book['title'];
+            $book['description'] = 'Buku seni tentang '.$book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -427,7 +423,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($olahragaBooks as $book) {
             $book['category_id'] = $categoryIds[12];
-            $book['description'] = 'Buku olahraga tentang ' . $book['title'];
+            $book['description'] = 'Buku olahraga tentang '.$book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -448,7 +444,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($politikBooks as $book) {
             $book['category_id'] = $categoryIds[13];
-            $book['description'] = 'Buku politik tentang ' . $book['title'];
+            $book['description'] = 'Buku politik tentang '.$book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }
@@ -469,7 +465,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($ekonomiBooks as $book) {
             $book['category_id'] = $categoryIds[14];
-            $book['description'] = 'Buku ekonomi tentang ' . $book['title'];
+            $book['description'] = 'Buku ekonomi tentang '.$book['title'];
             $book['cover'] = getCoverPath($book['cover']);
             $books[] = $book;
         }

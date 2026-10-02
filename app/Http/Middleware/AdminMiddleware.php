@@ -11,13 +11,6 @@ class AdminMiddleware
 {
     public function handle(Request $request, Closure $next): Response
     {
-<<<<<<< Updated upstream
-        if (!Auth::check()) {
-            return redirect('/login');
-        }
-
-        if (!Auth::user()->isAdmin()) {
-=======
         // Cek apakah user sudah login
         if (! Auth::check()) {
             return redirect()->route('login');
@@ -25,7 +18,6 @@ class AdminMiddleware
 
         // Cek apakah user adalah admin
         if (! Auth::user()->isAdmin()) {
->>>>>>> Stashed changes
             abort(403, 'Akses ditolak! Hanya untuk Admin.');
         }
 

@@ -11,13 +11,6 @@ class MemberMiddleware
 {
     public function handle(Request $request, Closure $next): Response
     {
-<<<<<<< Updated upstream
-        if (!Auth::check()) {
-            return redirect('/login');
-        }
-
-        if (!Auth::user()->isMember()) {
-=======
         // Cek apakah user sudah login
         if (! Auth::check()) {
             return redirect()->route('login');
@@ -25,7 +18,6 @@ class MemberMiddleware
 
         // Cek apakah user adalah member
         if (! Auth::user()->isMember()) {
->>>>>>> Stashed changes
             abort(403, 'Akses ditolak! Hanya untuk Member.');
         }
 
