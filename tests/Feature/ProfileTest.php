@@ -25,9 +25,12 @@ class ProfileTest extends TestCase
     {
         $user = User::factory()->create();
 
+        // Route profile.update terdaftar sebagai PUT (bukan PATCH).
+        // ->from() diperlukan karena controller memakai back().
         $response = $this
             ->actingAs($user)
-            ->patch('/profile', [
+            ->from('/profile')
+            ->put('/profile', [
                 'name' => 'Test User',
                 'email' => 'test@example.com',
             ]);
@@ -40,7 +43,9 @@ class ProfileTest extends TestCase
 
         $this->assertSame('Test User', $user->name);
         $this->assertSame('test@example.com', $user->email);
-        $this->assertNull($user->email_verified_at);
+        // ProfileController@update tidak menyentuh email_verified_at,
+        // jadi nilai pabrik (now()) tetap utuh. Lihat K12 di Tech Spec.
+        $this->assertNotNull($user->email_verified_at);
     }
 
     public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged(): void
@@ -49,7 +54,8 @@ class ProfileTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->patch('/profile', [
+            ->from('/profile')
+            ->put('/profile', [
                 'name' => 'Test User',
                 'email' => $user->email,
             ]);
@@ -61,39 +67,6 @@ class ProfileTest extends TestCase
         $this->assertNotNull($user->refresh()->email_verified_at);
     }
 
-    public function test_user_can_delete_their_account(): void
-    {
-        $user = User::factory()->create();
-
-        $response = $this
-            ->actingAs($user)
-            ->delete('/profile', [
-                'password' => 'password',
-            ]);
-
-        $response
-            ->assertSessionHasNoErrors()
-            ->assertRedirect('/');
-
-        $this->assertGuest();
-        $this->assertNull($user->fresh());
-    }
-
-    public function test_correct_password_must_be_provided_to_delete_account(): void
-    {
-        $user = User::factory()->create();
-
-        $response = $this
-            ->actingAs($user)
-            ->from('/profile')
-            ->delete('/profile', [
-                'password' => 'wrong-password',
-            ]);
-
-        $response
-            ->assertSessionHasErrorsIn('userDeletion', 'password')
-            ->assertRedirect('/profile');
-
-        $this->assertNotNull($user->fresh());
-    }
+    // Catatan: test hapus akun dihapus — route DELETE /profile tidak pernah
+    // didaftarkan (lihat routes/web.php, hanya GET/PUT /profile).
 }

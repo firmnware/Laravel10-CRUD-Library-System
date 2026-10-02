@@ -58,8 +58,13 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // PHP 8.5 menandai PDO::MYSQL_ATTR_SSL_CA sebagai deprecated dan
+            // menyarankan Pdo\Mysql::ATTR_SSL_CA. Cabang ternary memastikan
+            // konstanta lama hanya dievaluasi pada PHP < 8.5.
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                (defined(Pdo\Mysql::class.'::ATTR_SSL_CA')
+                    ? constant(Pdo\Mysql::class.'::ATTR_SSL_CA')
+                    : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
 

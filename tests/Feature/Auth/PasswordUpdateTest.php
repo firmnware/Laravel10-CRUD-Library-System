@@ -18,7 +18,7 @@ class PasswordUpdateTest extends TestCase
         $response = $this
             ->actingAs($user)
             ->from('/profile')
-            ->put('/password', [
+            ->put('/profile/password', [
                 'current_password' => 'password',
                 'password' => 'new-password',
                 'password_confirmation' => 'new-password',
@@ -38,14 +38,16 @@ class PasswordUpdateTest extends TestCase
         $response = $this
             ->actingAs($user)
             ->from('/profile')
-            ->put('/password', [
+            ->put('/profile/password', [
                 'current_password' => 'wrong-password',
                 'password' => 'new-password',
                 'password_confirmation' => 'new-password',
             ]);
 
         $response
-            ->assertSessionHasErrorsIn('updatePassword', 'current_password')
+            // ProfileController@updatePassword memakai back()->with('error', ...),
+            // bukan FormRequest ErrorBag, jadi assertion-nya sesi 'error'.
+            ->assertSessionHas('error')
             ->assertRedirect('/profile');
     }
 }

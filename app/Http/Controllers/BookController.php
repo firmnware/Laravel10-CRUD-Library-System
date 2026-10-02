@@ -13,23 +13,79 @@ class BookController extends Controller
     // ========== ADMIN: LIHAT SEMUA BUKU (Tanpa Pagination) ==========
     public function index()
     {
+<<<<<<< Updated upstream
         // ✅ Ambil SEMUA buku tanpa pagination
         $books = Book::with('category')->latest()->get();
         return view('admin.books.index', compact('books'));
+=======
+        // Ambil semua kategori untuk dropdown filter
+        $categories = Category::all();
+
+        // Query buku dengan relasi kategori
+        $query = Book::with('category');
+
+        //  FILTER BERDASARKAN KATEGORI
+        // Session last_category dipakai tombol "Kembali" di halaman
+        // create/edit/show, jadi harus ikut di-reset saat filter dikosongkan.
+        if ($request->filled('category')) {
+            $query->where('category_id', $request->category);
+            session(['last_category' => $request->category]);
+        } else {
+            session(['last_category' => '']);
+        }
+
+        //  SEARCH BERDASARKAN JUDUL BUKU
+        if ($request->filled('search')) {
+            $query->where('title', 'like', '%'.$request->search.'%');
+        }
+
+        //  PAGINATION 20 BUKU PER HALAMAN
+        $books = $query->latest()->paginate(20);
+
+        // Menambahkan query string ke pagination
+        $books->appends(request()->query());
+
+        return view('admin.books.index', compact('books', 'categories'));
+>>>>>>> Stashed changes
     }
 
     // ========== MEMBER: LIHAT SEMUA BUKU (Tanpa Pagination) ==========
     public function memberIndex()
     {
+<<<<<<< Updated upstream
         // ✅ Ambil SEMUA buku tanpa pagination
         $books = Book::with('category')->latest()->get();
         return view('member.books.index', compact('books'));
+=======
+        $categories = Category::all();
+        $query = Book::with('category');
+
+        if ($request->filled('category')) {
+            $query->where('category_id', $request->category);
+            session(['member_last_category' => $request->category]);
+        } else {
+            session(['member_last_category' => '']);
+        }
+
+        if ($request->filled('search')) {
+            $query->where('title', 'like', '%'.$request->search.'%');
+        }
+
+        //  PAGINATION 20 BUKU PER HALAMAN
+        $books = $query->latest()->paginate(20);
+
+        // Menambahkan query string ke pagination
+        $books->appends(request()->query());
+
+        return view('member.books.index', compact('books', 'categories'));
+>>>>>>> Stashed changes
     }
 
     // ========== TAMPILKAN FORM TAMBAH ==========
     public function create()
     {
         $categories = Category::all();
+
         return view('admin.books.create', compact('categories'));
     }
 
@@ -49,12 +105,13 @@ class BookController extends Controller
 
         if ($request->hasFile('cover')) {
             $file = $request->file('cover');
-            $filename = time() . '-' . Str::slug($request->title) . '.' . $file->getClientOriginalExtension();
+            $filename = time().'-'.Str::slug($request->title).'.'.$file->getClientOriginalExtension();
             $path = $file->storeAs('covers', $filename, 'public');
             $data['cover'] = $path;
         }
 
         Book::create($data);
+
         return redirect()->route('admin.books.index')->with('success', 'Buku berhasil ditambahkan');
     }
 
@@ -64,6 +121,7 @@ class BookController extends Controller
         if (auth()->user()->isMember()) {
             return view('member.books.show', compact('book'));
         }
+
         return view('admin.books.show', compact('book'));
     }
 
@@ -71,6 +129,7 @@ class BookController extends Controller
     public function edit(Book $book)
     {
         $categories = Category::all();
+
         return view('admin.books.edit', compact('book', 'categories'));
     }
 
@@ -79,38 +138,59 @@ class BookController extends Controller
     {
         $request->validate([
             'title' => 'required|string|max:255',
-            'isbn' => 'required|string|unique:books,isbn,' . $book->id,
+            'isbn' => 'required|string|unique:books,isbn,'.$book->id,
             'stock' => 'required|integer|min:1',
             'cover' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         $data = $request->all();
-        $diff = $request->stock - $book->stock;
-        $data['available_stock'] = $book->available_stock + $diff;
+
+        // C4: hitung ulang dari jumlah pinjaman aktif, bukan rumus ad-hoc
+        // "available + (stock - oldStock)" yang bisa menghasilkan stok minus
+        // saat admin menurunkan stock saat buku sedang dipinjam.
+        $activeBorrows = $book->transactions()->where('status', 'borrowed')->count();
+        $data['available_stock'] = max(0, (int) $request->stock - $activeBorrows);
 
         if ($request->hasFile('cover')) {
             if ($book->cover && Storage::disk('public')->exists($book->cover)) {
                 Storage::disk('public')->delete($book->cover);
             }
-            
+
             $file = $request->file('cover');
-            $filename = time() . '-' . Str::slug($request->title) . '.' . $file->getClientOriginalExtension();
+            $filename = time().'-'.Str::slug($request->title).'.'.$file->getClientOriginalExtension();
             $path = $file->storeAs('covers', $filename, 'public');
             $data['cover'] = $path;
         }
 
         $book->update($data);
+
         return redirect()->route('admin.books.index')->with('success', 'Buku berhasil diupdate');
     }
 
     // ========== HAPUS BUKU ==========
     public function destroy(Book $book)
     {
+        // C9 (temuan #13): FK transactions.book_id memakai ON DELETE CASCADE,
+        // jadi menghapus buku ikut menghapus transaksi & penalty tanpa suara.
+        // Keputusan yang dikunci: tolak penghapusan selama ada riwayat
+        // peminjaman apa pun — menjamin tidak ada data transaksi yang hilang
+        // tanpa perlu ganti FK atau menambah soft-delete.
+        if ($book->transactions()->where('status', 'borrowed')->exists()) {
+            return redirect()->route('admin.books.index')
+                ->with('error', 'Buku masih dipinjam dan tidak bisa dihapus');
+        }
+
+        if ($book->transactions()->exists()) {
+            return redirect()->route('admin.books.index')
+                ->with('error', 'Buku memiliki riwayat peminjaman dan tidak bisa dihapus');
+        }
+
         if ($book->cover && Storage::disk('public')->exists($book->cover)) {
             Storage::disk('public')->delete($book->cover);
         }
-        
+
         $book->delete();
+
         return redirect()->route('admin.books.index')->with('success', 'Buku berhasil dihapus');
     }
 }

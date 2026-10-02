@@ -11,12 +11,36 @@ class MemberMiddleware
 {
     public function handle(Request $request, Closure $next): Response
     {
+<<<<<<< Updated upstream
         if (!Auth::check()) {
             return redirect('/login');
         }
 
         if (!Auth::user()->isMember()) {
+=======
+        // Cek apakah user sudah login
+        if (! Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        // Cek apakah user adalah member
+        if (! Auth::user()->isMember()) {
+>>>>>>> Stashed changes
             abort(403, 'Akses ditolak! Hanya untuk Member.');
+        }
+
+        // C6: akun yang diblokir lewat toggle-status ditandai users.status =
+        // inactive, sedangkan sesinya tidak otomatis terputus. Tanpa cek ini,
+        // member yang sedang login tetap bisa mengakses area member sampai
+        // logout manual.
+        if (Auth::user()->status !== 'active') {
+            Auth::logout();
+
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')
+                ->with('error', 'Akun Anda dinonaktifkan. Hubungi administrator.');
         }
 
         return $next($request);
