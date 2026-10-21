@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\Transaction;
+use App\Models\Loan;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -15,13 +15,13 @@ class PenaltyFactory extends Factory
         $daysLate = fake()->numberBetween(1, 10);
 
         return [
-            // transaction_id HARUS didefinisikan sebelum member_id:
-            // closure di bawah membaca $definition['transaction_id'] yang sudah
+            // loan_id HARUS didefinisikan sebelum member_id:
+            // closure di bawah membaca $attributes['loan_id'] yang sudah
             // ter-resolve menjadi ID, sehingga member_id selalu konsisten
-            // dengan transaksinya.
-            'transaction_id' => Transaction::factory()->returnedLate($daysLate),
-            'member_id' => fn (array $attributes) => Transaction::query()
-                ->findOrFail($attributes['transaction_id'])->member_id,
+            // dengan peminjamannya.
+            'loan_id' => Loan::factory()->returnedLate($daysLate),
+            'member_id' => fn (array $attributes) => Loan::query()
+                ->findOrFail($attributes['loan_id'])->member_id,
             'days_late' => $daysLate,
             'fine_amount' => $daysLate * 2000,
             'status' => 'unpaid',

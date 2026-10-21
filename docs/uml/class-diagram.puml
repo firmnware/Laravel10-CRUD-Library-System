@@ -1,0 +1,109 @@
+@startuml class-diagram
+title Class Diagram - Sistem Perpustakaan (trial_perpustakaan2)
+' Sumber: app/Models/*.php + database/migrations/*_create_*.php
+skinparam classAttributeIconSize 0
+
+class User {
+  + id : int <<PK>>
+  + name : string
+  + email : string <<unique>>
+  + password : string
+  + role : enum(admin, member)
+  + status : enum(active, inactive)
+  + phone : string(15) <<nullable>>
+  + address : text <<nullable>>
+  + last_login_at : timestamp <<nullable>>
+  + isAdmin() : bool
+  + isMember() : bool
+  + member() : hasOne
+}
+
+class Member {
+  + id : int <<PK>>
+  + user_id : int <<FK, unique>>
+  + member_code : string(50) <<unique>>
+  + join_date : date
+  + status : enum(active, blocked)
+  + booted() : void
+  + user() : belongsTo
+  + transactions() : hasMany
+  + penalties() : hasMany
+  + canBorrow() : bool
+  + hasUnpaidPenalties() : bool
+  + getActiveBorrowsCount() : int
+}
+
+class Category {
+  + id : int <<PK>>
+  + name : string(100)
+  + description : text <<nullable>>
+  + books() : hasMany
+}
+
+class Book {
+  + id : int <<PK>>
+  + category_id : int <<FK, nullable>>
+  + title : string(255)
+  + author : string(255) <<nullable>>
+  + publisher : string(255) <<nullable>>
+  + year : int <<nullable>>
+  + isbn : string(20) <<unique>>
+  + cover : string <<nullable>>
+  + stock : int
+  + available_stock : int
+  + description : text <<nullable>>
+  + category() : belongsTo
+  + transactions() : hasMany
+  + isAvailable() : bool
+  + decreaseStock() : void
+  + increaseStock() : void
+}
+
+class Transaction {
+  + id : int <<PK>>
+  + transaction_code : string(50) <<unique>>
+  + member_id : int <<FK>>
+  + book_id : int <<FK>>
+  + borrow_date : date
+  + due_date : date
+  + return_date : date <<nullable>>
+  + status : enum(borrowed, returned, overdue)
+  + generateCode() : string <<static>>
+  + member() : belongsTo
+  + book() : belongsTo
+  + penalty() : hasOne
+}
+
+class Penalty {
+  + id : int <<PK>>
+  + transaction_id : int <<FK>>
+  + member_id : int <<FK>>
+  + days_late : int
+  + fine_amount : decimal(10,2)
+  + status : enum(unpaid, paid)
+  + paid_date : date <<nullable>>
+  + transaction() : belongsTo
+  + member() : belongsTo
+}
+
+' ---- Relasi (sesuai Eloquent + FK migration) ----
+User "1" -- "1" Member : hasOne / belongsTo\n<members.user_id UNIQUE, CASCADE>
+Category "1" -- "*" Book : hasMany / belongsTo\n<books.category_id NULL, SET NULL>
+Member "1" -- "*" Transaction : hasMany / belongsTo\n<transactions.member_id, CASCADE>
+Book "1" -- "*" Transaction : hasMany / belongsTo\n<transactions.book_id, CASCADE>
+Member "1" -- "*" Penalty : hasMany / belongsTo\n<penalties.member_id, CASCADE>
+Transaction "1" -- "0,1" Penalty : hasOne / belongsTo\n<penalties.transaction_id, CASCADE>
+
+note left of Transaction
+  Kode: Transaction::generateCode()
+  Format TRX-YYYYMMDD-XXXXXX (C1)
+  Status 'overdue' bersifat virtual:
+  borrowed + due_date < today
+end note
+
+note left of Member
+  member_code otomatis via
+  Member::booted() format
+  MBR-00001 (C2)
+end note
+@enduml

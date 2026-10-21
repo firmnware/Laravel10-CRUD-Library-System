@@ -1,0 +1,99 @@
+@startuml sequence-peminjaman
+title Sequence - Peminjaman Buku (POST admin/transactions)
+' Sumber: routes/web.php:57 + TransactionController@store + Member::canBorrow/hasUnpaidPenalties + Book::isAvailable/decreaseStock
+autonumber
+actor Admin
+participant "View\ncreate" as V
+participant "TransactionController" as C
+participant "Member" as M
+participant "Book" as B
+participant "Transaction" as T
+database DB
+
+Admin -> V : Buka form pinjam (GET create)
+activate V
+V -> C : create()
+activate C
+C -> M : where(status=active) + with(user)
+activate M
+M --> C : daftar member aktif
+deactivate M
+C -> B : where(available_stock > 0) + with(category)
+activate B
+B --> C : daftar buku tersedia
+deactivate B
+C --> V : tampilkan form (members, books)
+deactivate C
+V --> Admin : form peminjaman
+deactivate V
+
+Admin -> C : Submit (POST store)\nmember_id, book_id, borrow_date, due_date
+activate C
+C -> C : validate(member_id, book_id,\nborrow_date, due_date max_loan_days)
+alt validasi gagal
+  C --> Admin : 302 back + error validasi
+  deactivate C
+else validasi OK
+  C -> M : find(member_id)
+  activate M
+  M --> C : member
+  deactivate M
+  C -> M : canBorrow()\n(status active + borrows < max)
+  activate M
+  alt member tidak memenuhi syarat
+    M --> C : false
+    deactivate M
+    C --> Admin : 302 back "tidak dapat meminjam"
+    deactivate C
+  else lolos
+    M --> C : true
+    deactivate M
+    C -> M : hasUnpaidPenalties()
+    activate M
+    alt punya denda unpaid
+      M --> C : true
+      deactivate M
+      C --> Admin : 302 back "denda belum dibayar"
+      deactivate C
+    else bersih
+      M --> C : false
+      deactivate M
+      C -> DB : BEGIN
+      activate DB
+      C -> B : lockForUpdate(book_id)\nSELECT ... FOR UPDATE
+      activate B
+      B --> C : row buku terkunci
+      deactivate B
+      C -> B : isAvailable()\n(available_stock > 0)
+      activate B
+      alt stok habis
+        B --> C : false
+        deactivate B
+        C -> DB : ROLLBACK
+        C --> Admin : 302 back "stok tidak tersedia"
+        deactivate DB
+        deactivate C
+      else stok ada
+        B --> C : true
+        deactivate B
+        C -> T : generateCode()\nTRX-YYYYMMDD-XXXXXX
+        activate T
+        T --> C : kode transaksi
+        deactivate T
+        C -> T : create(status=borrowed)
+        activate T
+        T --> C : transaction baru
+        deactivate T
+        C -> B : decreaseStock()\nUPDATE available_stock - 1
+        activate B
+        B --> C : ok
+        deactivate B
+        C -> DB : COMMIT
+        C --> Admin : redirect index + "Peminjaman berhasil! Kode: ..."
+        deactivate DB
+        deactivate C
+      end
+    end
+  end
+end
+@enduml

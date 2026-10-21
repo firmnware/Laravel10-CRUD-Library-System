@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\Member;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -38,15 +37,11 @@ class RegisteredUserController extends Controller
             'status' => 'active',
             'phone' => $request->phone,
             'address' => $request->address,
+            'join_date' => now(),
         ]);
 
-        // Kode member dihasilkan otomatis oleh Member::booted() (C2)
+        // Kode member dihasilkan otomatis oleh User::booted() (C2)
         // agar tidak tabrakan dengan formula berbeda di tempat lain.
-        Member::create([
-            'user_id' => $user->id,
-            'join_date' => now(),
-            'status' => 'active',
-        ]);
 
         event(new Registered($user));
         Auth::login($user);

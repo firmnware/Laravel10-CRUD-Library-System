@@ -17,6 +17,12 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
+        @if(session('error'))
+            <div class="alert alert-danger alert-dismissible fade show">
+                <i class="fas fa-exclamation-circle me-2"></i> {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
 
         <!--  FORM SEARCH & FILTER -->
         <form method="GET" action="{{ route('admin.members.index') }}" class="mb-4">
@@ -94,9 +100,9 @@
                             <td>
                                 <span class="badge bg-secondary">{{ $member->member_code }}</span>
                             </td>
-                            <td>{{ $member->user->name }}</td>
-                            <td>{{ $member->user->email }}</td>
-                            <td>{{ $member->user->phone ?? '-' }}</td>
+                            <td>{{ $member->name }}</td>
+                            <td>{{ $member->email }}</td>
+                            <td>{{ $member->phone ?? '-' }}</td>
                             <td>{{ $member->join_date?->format('d/m/Y') ?? '-' }}</td>
                             <td>
                                 @if($member->status == 'active')
@@ -118,6 +124,14 @@
                                             <i class="fas fa-check me-1"></i> Aktifkan
                                         </button>
                                     @endif
+                                </form>
+                                <form action="{{ route('admin.members.destroy', $member) }}" method="POST" class="d-inline"
+                                      onsubmit="return confirm('Yakin hapus member {{ $member->member_code }}?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        <i class="fas fa-trash me-1"></i> Hapus
+                                    </button>
                                 </form>
                             </td>
                         </tr>

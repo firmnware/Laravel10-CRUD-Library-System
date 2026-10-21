@@ -33,6 +33,30 @@ class UserFactory extends Factory
     }
 
     /**
+     * Anggota aktif dengan kode member — status default factory.
+     *
+     * @return $this
+     */
+    public function blocked(): static
+    {
+        return $this->state(fn () => [
+            'status' => 'inactive',
+        ]);
+    }
+
+    /**
+     * Akun admin (tidak punya member_code).
+     *
+     * @return $this
+     */
+    public function admin(): static
+    {
+        return $this->state(fn () => [
+            'role' => 'admin',
+        ]);
+    }
+
+    /**
      * Indicate that the model's email address should be unverified.
      *
      * @return $this

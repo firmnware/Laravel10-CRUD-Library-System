@@ -15,7 +15,7 @@ return [
     |--------------------------------------------------------------------------
     | Jumlah pinjaman aktif maksimal per member
     |--------------------------------------------------------------------------
-    | Dipakai Member::canBorrow().
+    | Dipakai User::canBorrow().
     */
     'max_active_borrows' => 3,
 
@@ -31,7 +31,7 @@ return [
     |--------------------------------------------------------------------------
     | Batas maksimal durasi pinjaman (hari)
     |--------------------------------------------------------------------------
-    | Dipakai validasi due_date di TransactionController@store.
+    | Dipakai validasi due_date di LoanController@store.
     */
     'max_loan_days' => 30,
 

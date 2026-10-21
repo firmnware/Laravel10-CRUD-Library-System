@@ -18,6 +18,13 @@ return new class extends Migration
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->string('phone', 15)->nullable();
             $table->text('address')->nullable();
+
+            // Data keanggotaan perpustakaan (merge dari tabel members lama).
+            // Null untuk admin; MySQL mengizinkan banyak NULL pada index unik,
+            // jadi beberapa admin tanpa kode tidak saling bertabrakan.
+            $table->string('member_code', 50)->nullable()->unique();
+            $table->date('join_date')->nullable();
+
             $table->timestamp('last_login_at')->nullable();
             $table->rememberToken();
             $table->timestamps();

@@ -1,0 +1,235 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Book;
+use App\Models\Loan;
+use App\Models\Penalty;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class LoanReturnTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private User $admin;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->admin = User::factory()->admin()->create();
+    }
+
+    /** Langkah 1+2 alur baru: cari kode peminjaman, lompat ke halaman detail. */
+    private function findLoan(Loan $loan)
+    {
+        return $this->actingAs($this->admin)
+            ->post('/admin/returns', ['loan_code' => $loan->loan_code]);
+    }
+
+    /** Langkah 3 alur baru: proses pengembalian dengan tanggal yang diinput. */
+    private function processReturn(Loan $loan, string $returnDate)
+    {
+        return $this->actingAs($this->admin)
+            ->post('/admin/returns/'.$loan->loan_code, ['return_date' => $returnDate]);
+    }
+
+    public function test_return_on_time_creates_no_penalty_and_restores_stock(): void
+    {
+        $book = Book::factory()->create(['stock' => 3, 'available_stock' => 2]);
+        $loan = Loan::factory()->for($book)->create([
+            'due_date' => now()->addDays(3),
+            'status' => 'borrowed',
+        ]);
+
+        $response = $this->findLoan($loan);
+
+        $response->assertRedirect('/admin/returns/'.$loan->loan_code);
+
+        $response = $this->processReturn($loan, now()->toDateString());
+
+        $response->assertRedirect('/admin/returns');
+        $response->assertSessionHas('success');
+
+        $loan->refresh();
+        $this->assertSame('returned', $loan->status);
+        $this->assertNotNull($loan->return_date);
+        $this->assertSame(3, $book->refresh()->available_stock);
+
+        $this->assertDatabaseMissing('penalties', ['loan_id' => $loan->id]);
+    }
+
+    public function test_return_late_creates_penalty_with_correct_fine(): void
+    {
+        $loan = Loan::factory()->overdue()->create(); // jatuh tempo 3 hari lalu
+        $book = $loan->book;
+        $stockBefore = $book->available_stock;
+
+        $response = $this->processReturn($loan, now()->toDateString());
+
+        $response->assertRedirect('/admin/returns');
+        $response->assertSessionHas('success');
+
+        $loan->refresh();
+        $this->assertSame('returned', $loan->status);
+        $this->assertSame($stockBefore + 1, $book->refresh()->available_stock);
+
+        $penalty = Penalty::where('loan_id', $loan->id)->firstOrFail();
+        $this->assertSame(3, $penalty->days_late);
+        $this->assertSame(6000, (int) $penalty->fine_amount);
+        $this->assertSame('unpaid', $penalty->status);
+        $this->assertSame($loan->member_id, $penalty->member_id);
+    }
+
+    public function test_late_return_message_contains_fine_amount(): void
+    {
+        $loan = Loan::factory()->overdue()->create();
+
+        $this->processReturn($loan, now()->toDateString())
+            ->assertSessionHas('success', fn ($message) => str_contains($message, '6.000'));
+    }
+
+    public function test_on_time_return_message_says_tepat_waktu(): void
+    {
+        $loan = Loan::factory()->create([
+            'due_date' => now()->addDays(3),
+            'status' => 'borrowed',
+        ]);
+
+        $this->processReturn($loan, now()->toDateString())
+            ->assertSessionHas('success', fn ($message) => str_contains($message, 'tepat waktu'));
+    }
+
+    public function test_borrowed_book_cannot_be_returned_twice(): void
+    {
+        $loan = Loan::factory()->returned()->create();
+
+        $response = $this->findLoan($loan);
+
+        $response->assertSessionHas('error', 'Buku untuk kode ini sudah dikembalikan');
+        $this->assertSame(0, Penalty::where('loan_id', $loan->id)->count());
+    }
+
+    public function test_return_does_not_create_penalty_when_exactly_on_due_date(): void
+    {
+        $loan = Loan::factory()->create([
+            'due_date' => now(), // jatuh tempo hari ini -> belum terlambat
+            'status' => 'borrowed',
+        ]);
+
+        $this->findLoan($loan);
+        $this->processReturn($loan, now()->toDateString());
+
+        $this->assertSame('returned', $loan->refresh()->status);
+        $this->assertDatabaseMissing('penalties', ['loan_id' => $loan->id]);
+    }
+
+    public function test_returning_a_borrowed_book_decrements_then_reincrements_exactly_once(): void
+    {
+        $member = User::factory()->create();
+        $book = Book::factory()->create(['stock' => 2, 'available_stock' => 1]);
+        $loan = Loan::factory()->for($member)->for($book)->create([
+            'due_date' => now()->addDays(2),
+            'status' => 'borrowed',
+        ]);
+
+        $this->findLoan($loan);
+        $this->processReturn($loan, now()->toDateString());
+        $firstReturn = $book->refresh()->available_stock;
+
+        $this->processReturn($loan, now()->toDateString()); // ditolak
+        $secondAttempt = $book->refresh()->available_stock;
+
+        $this->assertSame(2, $firstReturn);
+        $this->assertSame($firstReturn, $secondAttempt);
+    }
+
+    // ---------- ALUR LENGKAP BARU (form pencarian -> detail -> proses) ----------
+
+    public function test_full_return_flow_search_validates_then_processes_late_return(): void
+    {
+        $book = Book::factory()->create(['stock' => 2, 'available_stock' => 1]);
+        // Jatuh tempo 5 hari lalu; dikembalikan hari ini -> telat 5 hari.
+        $loan = Loan::factory()->for($book)->create([
+            'due_date' => now()->subDays(5),
+            'status' => 'borrowed',
+        ]);
+
+        // 1) Kode yang tidak dikenal ditolak dengan error validasi.
+        $this->actingAs($this->admin)
+            ->post('/admin/returns', ['loan_code' => 'PJM-NOTEXISTING'])
+            ->assertSessionHasErrors([
+                'loan_code' => 'Kode peminjaman tidak ditemukan',
+            ]);
+
+        // 2) Kode yang dikenal -> lompat ke halaman detail berbasis kode.
+        $this->actingAs($this->admin)
+            ->post('/admin/returns', ['loan_code' => $loan->loan_code])
+            ->assertRedirect('/admin/returns/'.$loan->loan_code);
+
+        $this->actingAs($this->admin)
+            ->get('/admin/returns/'.$loan->loan_code)
+            ->assertOk()
+            ->assertViewIs('admin.returns.show')
+            ->assertViewHas('loan', fn ($viewLoan) => $viewLoan->id === $loan->id);
+
+        // 3) Proses pengembalian terlambat.
+        $this->processReturn($loan, now()->toDateString());
+
+        $loan->refresh();
+        $this->assertSame(now()->toDateString(), $loan->return_date->toDateString());
+        $this->assertSame('returned', $loan->status);
+        $this->assertSame(2, $book->refresh()->available_stock);
+
+        $penalty = Penalty::where('loan_id', $loan->id)->firstOrFail();
+        $this->assertSame(5, $penalty->days_late);
+        $this->assertSame(10000, (int) $penalty->fine_amount);
+        $this->assertSame('unpaid', $penalty->status);
+        $this->assertSame($loan->member_id, $penalty->member_id);
+    }
+
+    // ---------- VALIDASI TANGGAL PENGEMBALIAN ----------
+
+    public function test_return_date_cannot_be_in_the_future(): void
+    {
+        $loan = Loan::factory()->create([
+            'due_date' => now()->addDays(3),
+            'status' => 'borrowed',
+        ]);
+        $book = $loan->book;
+        $stockBefore = $book->available_stock;
+
+        $this->processReturn($loan, now()->addDays(2)->toDateString())
+            ->assertSessionHasErrors([
+                'return_date' => 'Tanggal pengembalian tidak boleh di masa depan.',
+            ]);
+
+        // Tidak ada yang berubah.
+        $loan->refresh();
+        $this->assertSame('borrowed', $loan->status);
+        $this->assertNull($loan->return_date);
+        $this->assertSame($stockBefore, $book->refresh()->available_stock);
+        $this->assertDatabaseMissing('penalties', ['loan_id' => $loan->id]);
+    }
+
+    public function test_return_date_cannot_be_before_borrow_date(): void
+    {
+        $loan = Loan::factory()->create([
+            'borrow_date' => now()->subDays(5),
+            'due_date' => now()->addDays(3),
+            'status' => 'borrowed',
+        ]);
+
+        $this->processReturn($loan, now()->subDays(7)->toDateString())
+            ->assertSessionHasErrors([
+                'return_date' => 'Tanggal pengembalian tidak boleh sebelum tanggal pinjam.',
+            ]);
+
+        // Tidak ada yang berubah.
+        $loan->refresh();
+        $this->assertSame('borrowed', $loan->status);
+        $this->assertNull($loan->return_date);
+        $this->assertDatabaseMissing('penalties', ['loan_id' => $loan->id]);
+    }
+}

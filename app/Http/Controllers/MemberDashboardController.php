@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Transaction;
+use App\Models\Loan;
 use App\Models\Penalty;
 use Illuminate\Support\Facades\Auth;
 
@@ -10,55 +10,56 @@ class MemberDashboardController extends Controller
 {
     public function index()
     {
+        // Pasca-merge: member = User yang login sendiri (tidak ada tabel members).
         $user = Auth::user();
-        $member = $user->member;
-        
-        $activeBorrows = Transaction::where('member_id', $member->id)
+
+        $activeBorrows = Loan::where('member_id', $user->id)
             ->where('status', 'borrowed')
             ->count();
-        
-        $totalBorrows = Transaction::where('member_id', $member->id)->count();
-        
-        $unpaidPenalty = Penalty::where('member_id', $member->id)
+
+        $totalBorrows = Loan::where('member_id', $user->id)->count();
+
+        $unpaidPenalty = Penalty::where('member_id', $user->id)
             ->where('status', 'unpaid')
             ->sum('fine_amount');
-        
-        $currentBorrows = Transaction::with('book')
-            ->where('member_id', $member->id)
+
+        $currentBorrows = Loan::with('book')
+            ->where('member_id', $user->id)
             ->where('status', 'borrowed')
             ->get();
-        
-        $borrowHistory = Transaction::with('book')
-            ->where('member_id', $member->id)
+
+        $borrowHistory = Loan::with('book')
+            ->where('member_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
         return view('member.dashboard', compact(
-            'member', 'activeBorrows', 'totalBorrows', 
+            'user', 'activeBorrows', 'totalBorrows',
             'unpaidPenalty', 'currentBorrows', 'borrowHistory'
         ));
     }
 
     public function myBorrows()
     {
-        $member = Auth::user()->member;
-        $borrows = Transaction::with('book')
-            ->where('member_id', $member->id)
+        $borrows = Loan::with('book')
+            ->where('member_id', Auth::id())
             ->orderBy('created_at', 'desc')
             ->paginate(10);
-        
+
         return view('member.borrows', compact('borrows'));
     }
 
     public function myPenalties()
     {
-        $member = Auth::user()->member;
-        $penalties = Penalty::with('transaction.book')
-            ->where('member_id', $member->id)
+        $totalUnpaid = Penalty::where('member_id', Auth::id())
+            ->where('status', 'unpaid')
+            ->sum('fine_amount');
+        $penalties = Penalty::with('loan.book')
+            ->where('member_id', Auth::id())
             ->orderBy('created_at', 'desc')
-            ->get();
-        
-        return view('member.penalties', compact('penalties'));
+            ->paginate(10);
+
+        return view('member.penalties', compact('penalties', 'totalUnpaid'));
     }
 }

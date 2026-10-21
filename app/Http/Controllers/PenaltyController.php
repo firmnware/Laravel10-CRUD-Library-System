@@ -15,29 +15,27 @@ class PenaltyController extends Controller
         $totalUnpaid = Penalty::where('status', 'unpaid')->sum('fine_amount');
         $totalPaid = Penalty::where('status', 'paid')->sum('fine_amount');
 
-        $query = Penalty::with(['transaction.member.user', 'transaction.book']);
+        $query = Penalty::with(['loan.user', 'loan.book']);
 
         // Filter berdasarkan status denda
         if ($request->filled('status') && in_array($request->status, ['paid', 'unpaid'])) {
             $query->where('status', $request->status);
         }
 
-        // Search: kode transaksi, kode member, nama/email/no. HP member, judul buku
+        // Search: kode peminjaman, nama/email/no. HP member, judul buku
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->whereHas('transaction', function ($tq) use ($search) {
-                    $tq->where('transaction_code', 'like', '%'.$search.'%')
+                $q->whereHas('loan', function ($tq) use ($search) {
+                    $tq->where('loan_code', 'like', '%'.$search.'%')
                         ->orWhereHas('book', function ($bq) use ($search) {
                             $bq->where('title', 'like', '%'.$search.'%');
                         })
-                        ->orWhereHas('member', function ($mq) use ($search) {
-                            $mq->where('member_code', 'like', '%'.$search.'%')
-                                ->orWhereHas('user', function ($uq) use ($search) {
-                                    $uq->where('name', 'like', '%'.$search.'%')
-                                        ->orWhere('email', 'like', '%'.$search.'%')
-                                        ->orWhere('phone', 'like', '%'.$search.'%');
-                                });
+                        ->orWhereHas('user', function ($uq) use ($search) {
+                            $uq->where('member_code', 'like', '%'.$search.'%')
+                                ->orWhere('name', 'like', '%'.$search.'%')
+                                ->orWhere('email', 'like', '%'.$search.'%')
+                                ->orWhere('phone', 'like', '%'.$search.'%');
                         });
                 });
             });

@@ -1,0 +1,49 @@
+@startuml sequence-bayar-denda
+title Sequence - Bayar Denda (PUT admin/penalties/{id}/pay)
+' Sumber: routes/web.php:62-63 + PenaltyController@showPayForm/payPenalty
+autonumber
+actor Admin
+participant "PenaltyController" as C
+participant "Penalty" as P
+database DB
+
+Admin -> C : showPayForm(penalty) [GET pay form]
+activate C
+C -> P : cek status == 'paid'?
+activate P
+alt sudah lunas
+  P --> C : paid
+  deactivate P
+  C --> Admin : redirect index + "sudah dibayar!"
+  deactivate C
+else belum lunas
+  P --> C : unpaid
+  deactivate P
+  C --> Admin : tampilkan view pay (konfirmasi)
+  deactivate C
+end
+
+Admin -> C : payPenalty(penalty) [PUT pay]
+activate C
+C -> P : cek status == 'paid'?
+activate P
+alt sudah lunas (balapan / double submit)
+  P --> C : paid
+  deactivate P
+  C --> Admin : redirect index + "sudah dibayar!"
+  deactivate C
+else belum lunas
+  P --> C : unpaid
+  deactivate P
+  C -> DB : BEGIN
+  activate DB
+  C -> P : update(status=paid, paid_date=now())
+  activate P
+  P --> C : ok
+  deactivate P
+  C -> DB : COMMIT
+  deactivate DB
+  C --> Admin : redirect index + "berhasil dibayar!"
+  deactivate C
+end
+@enduml

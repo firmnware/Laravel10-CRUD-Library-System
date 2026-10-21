@@ -14,7 +14,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
             <a class="navbar-brand" href="{{ route('dashboard') }}">
-                <i class="fas fa-book me-2"></i> Perpustakaan
+                <i class="fas fa-book me-2"></i> Perpustakaan The Origin
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -26,7 +26,8 @@
                             <li class="nav-item"><a class="nav-link" href="{{ route('admin.dashboard') }}">Dashboard</a></li>
                             <li class="nav-item"><a class="nav-link" href="{{ route('admin.books.index') }}">Buku</a></li>
                             <li class="nav-item"><a class="nav-link" href="{{ route('admin.members.index') }}">Member</a></li>
-                            <li class="nav-item"><a class="nav-link" href="{{ route('admin.transactions.index') }}">Transaksi</a></li>
+                            <li class="nav-item"><a class="nav-link" href="{{ route('admin.loans.index') }}">Peminjaman</a></li>
+                            <li class="nav-item"><a class="nav-link" href="{{ route('admin.returns.index') }}">Pengembalian</a></li>
                             <li class="nav-item"><a class="nav-link" href="{{ route('admin.penalties.index') }}">Denda</a></li>
                         @else
                             <li class="nav-item"><a class="nav-link" href="{{ route('member.dashboard') }}">Dashboard</a></li>

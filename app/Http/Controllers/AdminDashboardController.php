@@ -3,28 +3,27 @@
 namespace App\Http\Controllers;
 
 use App\Models\Book;
-use App\Models\Member;
-use App\Models\Transaction;
+use App\Models\Loan;
 use App\Models\Penalty;
-use Illuminate\Support\Facades\DB;
+use App\Models\User;
 
 class AdminDashboardController extends Controller
 {
     public function index()
     {
         $totalBooks = Book::count();
-        $totalMembers = Member::count();
-        $activeBorrows = Transaction::where('status', 'borrowed')->count();
+        $totalMembers = User::where('role', 'member')->count();
+        $activeBorrows = Loan::where('status', 'borrowed')->count();
         $totalPenalties = Penalty::where('status', 'unpaid')->sum('fine_amount');
-        
-        $recentTransactions = Transaction::with(['member.user', 'book'])
+
+        $recentLoans = Loan::with(['user', 'book'])
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
 
         return view('admin.dashboard', compact(
-            'totalBooks', 'totalMembers', 'activeBorrows', 
-            'totalPenalties', 'recentTransactions'
+            'totalBooks', 'totalMembers', 'activeBorrows',
+            'totalPenalties', 'recentLoans'
         ));
     }
 }

@@ -7,12 +7,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
-class Transaction extends Model
+class Loan extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'transaction_code', 'member_id', 'book_id',
+        'loan_code', 'member_id', 'book_id',
         'borrow_date', 'due_date', 'return_date', 'status',
     ];
 
@@ -22,9 +22,9 @@ class Transaction extends Model
         'return_date' => 'date',
     ];
 
-    public function member()
+    public function user()
     {
-        return $this->belongsTo(Member::class);
+        return $this->belongsTo(User::class, 'member_id');
     }
 
     public function book()
@@ -38,18 +38,17 @@ class Transaction extends Model
     }
 
     /**
-     * Kode transaksi unik (C1).
+     * Kode peminjaman unik (C1).
      *
-     * Format lama 'TRX-<Ymd>-<rand(100,999)>' hanya punya 900 kombinasi per
-     * hari sehingga bisa tabrakan. Suffix 6 karakter acak memberi ~2.1 miliar
-     * kombinasi, jauh melebihi kolom varchar(50) dan aman dari race condition.
+     * Suffix 6 karakter acak memberi ~2.1 miliar kombinasi per hari, jauh
+     * melebihi kolom varchar(50) dan aman dari race condition.
      */
     public static function generateCode(): string
     {
-        return 'TRX-'.date('Ymd').'-'.strtoupper(Str::random(6));
+        return 'PJM-'.date('Ymd').'-'.strtoupper(Str::random(6));
     }
 
-    //  CEK APAKAH TRANSAKSI MEMILIKI DENDA (REAL-TIME)
+    //  CEK APAKAH PEMINJAMAN MEMILIKI DENDA (REAL-TIME)
     public function getHasFineAttribute()
     {
         if ($this->status === 'returned') {

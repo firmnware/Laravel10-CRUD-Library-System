@@ -6,11 +6,12 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\BookController;
+use App\Http\Controllers\LoanController;
+use App\Http\Controllers\LoanReturnController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\MemberDashboardController;
 use App\Http\Controllers\PenaltyController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
 // GUEST ROUTES
@@ -49,12 +50,18 @@ Route::middleware('auth')->group(function () {
         Route::get('members/create', [MemberController::class, 'create'])->name('members.create');
         Route::post('members', [MemberController::class, 'store'])->name('members.store');
         Route::put('members/{member}/toggle-status', [MemberController::class, 'toggleStatus'])->name('members.toggle-status');
+        Route::delete('members/{member}', [MemberController::class, 'destroy'])->name('members.destroy');
 
-        // Transaksi
-        Route::get('transactions', [TransactionController::class, 'index'])->name('transactions.index');
-        Route::get('transactions/create', [TransactionController::class, 'create'])->name('transactions.create');
-        Route::post('transactions', [TransactionController::class, 'store'])->name('transactions.store');
-        Route::put('transactions/{transaction}/return', [TransactionController::class, 'returnBook'])->name('transactions.return');
+        // Peminjaman (dulu "Transaksi")
+        Route::get('loans', [LoanController::class, 'index'])->name('loans.index');
+        Route::get('loans/create', [LoanController::class, 'create'])->name('loans.create');
+        Route::post('loans', [LoanController::class, 'store'])->name('loans.store');
+
+        // Pengembalian berbasis kode peminjaman (Bagian 3)
+        Route::get('returns', [LoanReturnController::class, 'index'])->name('returns.index');
+        Route::post('returns', [LoanReturnController::class, 'search'])->name('returns.search');
+        Route::get('returns/{loanCode}', [LoanReturnController::class, 'show'])->name('returns.show');
+        Route::post('returns/{loanCode}', [LoanReturnController::class, 'process'])->name('returns.process');
 
         //  DENDA
         Route::get('penalties', [PenaltyController::class, 'index'])->name('penalties.index');

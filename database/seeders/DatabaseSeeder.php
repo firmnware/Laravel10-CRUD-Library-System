@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Book;
 use App\Models\Category;
-use App\Models\Member;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -36,14 +35,9 @@ class DatabaseSeeder extends Seeder
             'status' => 'active',
             'phone' => '081234567891',
             'address' => 'Jl. Member Default No. 1',
-            'last_login_at' => now(),
-        ]);
-
-        Member::create([
-            'user_id' => $memberDefault1->id,
             'member_code' => 'MBR-00001',
             'join_date' => now()->subDays(30),
-            'status' => 'active',
+            'last_login_at' => now(),
         ]);
 
         // Member 2: member2@gmail.com
@@ -55,14 +49,9 @@ class DatabaseSeeder extends Seeder
             'status' => 'active',
             'phone' => '081234567892',
             'address' => 'Jl. Member Dua No. 2',
-            'last_login_at' => now(),
-        ]);
-
-        Member::create([
-            'user_id' => $memberDefault2->id,
             'member_code' => 'MBR-00002',
             'join_date' => now()->subDays(20),
-            'status' => 'active',
+            'last_login_at' => now(),
         ]);
 
         // ========== BUAT 20 MEMBER LAINNYA ==========
@@ -83,7 +72,7 @@ class DatabaseSeeder extends Seeder
                 continue;
             }
 
-            $user = User::create([
+            $member = User::create([
                 'name' => $name,
                 'email' => $email,
                 'password' => Hash::make('password123'),
@@ -91,14 +80,9 @@ class DatabaseSeeder extends Seeder
                 'status' => 'active',
                 'phone' => '08'.rand(1000000000, 9999999999),
                 'address' => 'Jl. '.$name.' No. '.rand(1, 100),
-                'last_login_at' => now()->subDays(rand(0, 30)),
-            ]);
-
-            $member = Member::create([
-                'user_id' => $user->id,
                 'member_code' => 'MBR-'.str_pad($i + 3, 5, '0', STR_PAD_LEFT), // Mulai dari 00003
                 'join_date' => now()->subDays(rand(1, 365)),
-                'status' => 'active',
+                'last_login_at' => now()->subDays(rand(0, 30)),
             ]);
 
             $memberProfiles[] = $member;

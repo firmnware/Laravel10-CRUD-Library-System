@@ -2,9 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\Member;
+use App\Models\Loan;
 use App\Models\Penalty;
-use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -18,17 +17,17 @@ class PenaltyTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->admin = User::factory()->create(['role' => 'admin']);
+        $this->admin = User::factory()->admin()->create();
     }
 
     private function unpaidPenalty(): Penalty
     {
-        $transaction = Transaction::factory()->returnedLate(3)->create();
+        $loan = Loan::factory()->returnedLate(3)->create();
 
         // Pin nilainya supaya perhitungan total bisa diprediksi (3 × 2000 = 6000).
         return Penalty::factory()->create([
-            'transaction_id' => $transaction->id,
-            'member_id' => $transaction->member_id,
+            'loan_id' => $loan->id,
+            'member_id' => $loan->member_id,
             'days_late' => 3,
             'fine_amount' => 6000,
         ]);
@@ -46,7 +45,6 @@ class PenaltyTest extends TestCase
         $penalty->refresh();
         $this->assertSame('paid', $penalty->status);
         $this->assertNotNull($penalty->paid_date);
-        $this->assertTrue($penalty->isPaid());
     }
 
     public function test_paying_an_already_paid_penalty_is_rejected(): void
@@ -57,7 +55,7 @@ class PenaltyTest extends TestCase
             ->put('/admin/penalties/'.$penalty->id.'/pay');
 
         $response->assertSessionHas('error');
-        $this->assertTrue($penalty->refresh()->isPaid());
+        $this->assertSame('paid', $penalty->refresh()->status);
     }
 
     public function test_pay_form_is_rendered_for_unpaid_penalty(): void
@@ -96,13 +94,13 @@ class PenaltyTest extends TestCase
 
     public function test_member_only_sees_their_own_penalties(): void
     {
-        $memberUser = User::factory()->create(['role' => 'member']);
-        $myMember = Member::factory()->for($memberUser, 'user')->create();
+        // Pasca-merge: denda merujuk langsung ke users (member_id).
+        $memberUser = User::factory()->create();
 
-        $myLate = Transaction::factory()->for($myMember)->returnedLate(2)->create();
+        $myLate = Loan::factory()->for($memberUser)->returnedLate(2)->create();
         $mine = Penalty::factory()->create([
-            'transaction_id' => $myLate->id,
-            'member_id' => $myMember->id,
+            'loan_id' => $myLate->id,
+            'member_id' => $myLate->member_id,
         ]);
         $other = $this->unpaidPenalty();
 
@@ -117,16 +115,15 @@ class PenaltyTest extends TestCase
 
     public function test_member_dashboard_shows_unpaid_fine_total(): void
     {
-        $transaction = Transaction::factory()->returnedLate(3)->create();
-        $member = $transaction->member;
+        $loan = Loan::factory()->returnedLate(3)->create();
         Penalty::factory()->create([
-            'transaction_id' => $transaction->id,
-            'member_id' => $member->id,
+            'loan_id' => $loan->id,
+            'member_id' => $loan->member_id,
             'days_late' => 3,
             'fine_amount' => 6000,
         ]);
 
-        $this->actingAs($member->user)
+        $this->actingAs($loan->user)
             ->get('/member/dashboard')
             ->assertOk()
             ->assertViewHas('unpaidPenalty', 6000);

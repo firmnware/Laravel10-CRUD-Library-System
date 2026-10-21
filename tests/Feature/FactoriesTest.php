@@ -4,9 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\Book;
 use App\Models\Category;
-use App\Models\Member;
+use App\Models\Loan;
 use App\Models\Penalty;
-use App\Models\Transaction;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -45,67 +45,72 @@ class FactoriesTest extends TestCase
         $this->assertFalse($book->isAvailable());
     }
 
-    public function test_member_factory_creates_active_member_with_user(): void
+    public function test_user_factory_creates_active_member(): void
     {
-        $member = Member::factory()->create();
+        // Pasca-merge: User::factory() default = member aktif.
+        $member = User::factory()->create();
 
-        $this->assertDatabaseHas('members', ['id' => $member->id, 'status' => 'active']);
-        $this->assertNotNull($member->user);
+        $this->assertDatabaseHas('users', [
+            'id' => $member->id,
+            'role' => 'member',
+            'status' => 'active',
+        ]);
+        $this->assertNotNull($member->member_code);
         $this->assertTrue($member->canBorrow());
     }
 
-    public function test_member_factory_blocked_state(): void
+    public function test_user_factory_blocked_state(): void
     {
-        $member = Member::factory()->blocked()->create();
+        $member = User::factory()->blocked()->create();
 
-        $this->assertSame('blocked', $member->status);
+        $this->assertSame('inactive', $member->status);
         $this->assertFalse($member->canBorrow());
     }
 
-    public function test_transaction_factory_creates_borrowed_transaction(): void
+    public function test_loan_factory_creates_borrowed_loan(): void
     {
-        $transaction = Transaction::factory()->create();
+        $loan = Loan::factory()->create();
 
-        $this->assertDatabaseHas('transactions', [
-            'id' => $transaction->id,
+        $this->assertDatabaseHas('loans', [
+            'id' => $loan->id,
             'status' => 'borrowed',
         ]);
-        $this->assertNotNull($transaction->member);
-        $this->assertNotNull($transaction->book);
-        $this->assertNull($transaction->return_date);
+        $this->assertNotNull($loan->user);
+        $this->assertNotNull($loan->book);
+        $this->assertNull($loan->return_date);
     }
 
-    public function test_transaction_code_is_unique_per_row(): void
+    public function test_loan_code_is_unique_per_row(): void
     {
-        $codes = Transaction::factory()->count(50)->create()->pluck('transaction_code');
+        $codes = Loan::factory()->count(50)->create()->pluck('loan_code');
 
         $this->assertSame(50, $codes->unique()->count());
     }
 
-    public function test_transaction_overdue_state_is_late(): void
+    public function test_loan_overdue_state_is_late(): void
     {
-        $transaction = Transaction::factory()->overdue()->create();
+        $loan = Loan::factory()->overdue()->create();
 
-        $this->assertTrue($transaction->has_fine);
-        $this->assertSame(3, $transaction->late_days);
-        $this->assertSame(6000, $transaction->current_fine);
+        $this->assertTrue($loan->has_fine);
+        $this->assertSame(3, $loan->late_days);
+        $this->assertSame(6000, $loan->current_fine);
     }
 
-    public function test_transaction_returned_state_has_no_real_time_fine(): void
+    public function test_loan_returned_state_has_no_real_time_fine(): void
     {
-        $transaction = Transaction::factory()->returned()->create();
+        $loan = Loan::factory()->returned()->create();
 
-        $this->assertSame('returned', $transaction->status);
-        $this->assertNotNull($transaction->return_date);
-        $this->assertFalse($transaction->has_fine);
-        $this->assertSame(0, $transaction->current_fine);
+        $this->assertSame('returned', $loan->status);
+        $this->assertNotNull($loan->return_date);
+        $this->assertFalse($loan->has_fine);
+        $this->assertSame(0, $loan->current_fine);
     }
 
-    public function test_penalty_factory_derives_member_from_its_transaction(): void
+    public function test_penalty_factory_derives_member_from_its_loan(): void
     {
         $penalty = Penalty::factory()->create();
 
-        $this->assertSame($penalty->transaction->member_id, $penalty->member_id);
+        $this->assertSame($penalty->loan->member_id, $penalty->member_id);
         $this->assertSame($penalty->days_late * 2000, (int) $penalty->fine_amount);
         $this->assertSame('unpaid', $penalty->status);
     }
@@ -114,7 +119,7 @@ class FactoriesTest extends TestCase
     {
         $penalty = Penalty::factory()->paid()->create();
 
-        $this->assertTrue($penalty->isPaid());
+        $this->assertSame('paid', $penalty->status);
         $this->assertNotNull($penalty->paid_date);
     }
 }

@@ -46,10 +46,10 @@
 
 <div class="card">
     <div class="card-header">
-        <h5>Transaksi Terbaru</h5>
+        <h5>Peminjaman Terbaru</h5>
     </div>
     <div class="card-body">
-        @if(isset($recentTransactions) && $recentTransactions->count() > 0)
+        @if(isset($recentLoans) && $recentLoans->count() > 0)
             <div class="table-responsive">
                 <table class="table table-bordered">
                     <thead>
@@ -62,10 +62,10 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($recentTransactions as $trx)
+                        @foreach($recentLoans as $trx)
                         <tr>
-                            <td>{{ $trx->transaction_code }}</td>
-                            <td>{{ $trx->member->user->name ?? '-' }}</td>
+                            <td>{{ $trx->loan_code }}</td>
+                            <td>{{ $trx->user->name ?? '-' }}</td>
                             <td>{{ $trx->book->title ?? '-' }}</td>
                             <td>{{ $trx->borrow_date?->format('d/m/Y') ?? '-' }}</td>
                             <td>
@@ -81,7 +81,7 @@
                 </table>
             </div>
         @else
-            <p class="text-muted">Belum ada transaksi</p>
+            <p class="text-muted">Belum ada peminjaman</p>
         @endif
     </div>
 </div>

@@ -1,0 +1,30 @@
+@startuml sequence-tambah-member
+title Sequence - Tambah Member (POST admin/members)
+' Sumber: routes/web.php:50 + MemberController@store + Member::booted (C2)
+autonumber
+actor Admin
+participant "MemberController" as C
+participant "User" as U
+participant "Member" as M
+database DB
+
+Admin -> C : store(name, email, password, phone, address)
+activate C
+C -> C : validate(name, email unique:users,\npassword min:6)
+alt validasi gagal
+  C --> Admin : 302 back + error validasi
+  deactivate C
+else validasi OK
+  C -> U : create(name, email,\nHash::make(password), role=member)
+  activate U
+  U --> C : user baru
+  deactivate U
+  C -> M : create(user_id, join_date=now(), active)
+  activate M
+  M -> M : booted/creating()\nmember_code kosong? generate MBR-0000N\n(max id + 1, anti-tabrakan)
+  M --> C : member baru
+  deactivate M
+  C --> Admin : redirect index + "berhasil ditambahkan"
+  deactivate C
+end
+@enduml

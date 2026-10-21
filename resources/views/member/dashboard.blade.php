@@ -16,7 +16,7 @@
         <div class="card bg-info text-white">
             <div class="card-body">
                 <h5>Kode Member</h5>
-                <h4>{{ $member->member_code ?? '-' }}</h4>
+                <h4>{{ $user->member_code ?? '-' }}</h4>
             </div>
         </div>
     </div>

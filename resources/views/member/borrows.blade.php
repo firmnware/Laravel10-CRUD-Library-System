@@ -23,7 +23,7 @@
                     <tbody>
                         @foreach($borrows as $borrow)
                         <tr>
-                            <td>{{ $borrow->transaction_code }}</td>
+                            <td>{{ $borrow->loan_code }}</td>
                             <td>{{ $borrow->book->title ?? '-' }}</td>
                             <td>{{ $borrow->borrow_date?->format('d/m/Y') ?? '-' }}</td>
                             <td>{{ $borrow->due_date?->format('d/m/Y') ?? '-' }}</td>

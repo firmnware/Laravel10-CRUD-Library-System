@@ -1,14 +1,19 @@
 @extends('layouts.app')
 
-@section('title', 'Transaksi')
+@section('title', 'Peminjaman')
 
 @section('content')
 <div class="card">
     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="fas fa-exchange-alt me-2"></i> Daftar Transaksi</h5>
-        <a href="{{ route('admin.transactions.create') }}" class="btn btn-light btn-sm">
-            <i class="fas fa-plus me-1"></i> Pinjam Buku
-        </a>
+        <h5 class="mb-0"><i class="fas fa-hand-holding me-2"></i> Daftar Peminjaman</h5>
+        <div class="d-flex gap-2">
+            <a href="{{ route('admin.returns.index') }}" class="btn btn-success btn-sm">
+                <i class="fas fa-undo me-1"></i> Pengembalian
+            </a>
+            <a href="{{ route('admin.loans.create') }}" class="btn btn-light btn-sm">
+                <i class="fas fa-plus me-1"></i> Pinjam Buku
+            </a>
+        </div>
     </div>
     <div class="card-body">
         @if(session('success'))
@@ -26,7 +31,7 @@
         @endif
 
         <!--  FORM SEARCH & FILTER -->
-        <form method="GET" action="{{ route('admin.transactions.index') }}" class="mb-4">
+        <form method="GET" action="{{ route('admin.loans.index') }}" class="mb-4">
             <div class="row g-2">
                 <div class="col-md-5">
                     <div class="input-group">
@@ -56,7 +61,7 @@
                         <div class="d-flex gap-2 flex-wrap align-items-center">
                             <span class="text-muted">
                                 <i class="fas fa-info-circle me-1"></i>
-                                Menampilkan <strong>{{ $transactions->total() }}</strong> transaksi
+                                Menampilkan <strong>{{ $loans->total() }}</strong> peminjaman
                             </span>
                             @if(request('search'))
                                 <span class="badge bg-info">Pencarian: "{{ request('search') }}"</span>
@@ -68,21 +73,21 @@
                             @elseif(request('status') == 'returned')
                                 <span class="badge bg-success">Status: Dikembalikan</span>
                             @endif
-                            <a href="{{ route('admin.transactions.index') }}" class="btn btn-secondary btn-sm">
+                            <a href="{{ route('admin.loans.index') }}" class="btn btn-secondary btn-sm">
                                 <i class="fas fa-times me-1"></i> Reset Filter
                             </a>
                         </div>
                     @else
                         <span class="text-muted">
                             <i class="fas fa-info-circle me-1"></i>
-                            Menampilkan <strong>{{ $transactions->total() }}</strong> transaksi
+                            Menampilkan <strong>{{ $loans->total() }}</strong> peminjaman
                         </span>
                     @endif
                 </div>
             </div>
         </form>
 
-        @if($transactions->count() > 0)
+        @if($loans->count() > 0)
             <div class="table-responsive">
                 <table class="table table-bordered table-hover align-middle">
                     <thead class="table-light">
@@ -99,26 +104,26 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($transactions as $trx)
+                        @foreach($loans as $loan)
                         @php
-                            $days = $trx->remaining_days;
-                            $hasFine = $trx->has_fine;
-                            $fineAmount = $trx->current_fine;
-                            $penalty = $trx->penalty;
+                            $days = $loan->remaining_days;
+                            $hasFine = $loan->has_fine;
+                            $fineAmount = $loan->current_fine;
+                            $penalty = $loan->penalty;
                             $penaltyStatus = $penalty ? $penalty->status : null;
                             $penaltyPaidDate = $penalty ? $penalty->paid_date : null;
-                            $isReturned = $trx->status === 'returned';
+                            $isReturned = $loan->status === 'returned';
                         @endphp
                         <tr>
                             <td>
-                                <span class="badge bg-secondary">{{ $trx->transaction_code }}</span>
+                                <span class="badge bg-secondary">{{ $loan->loan_code }}</span>
                             </td>
-                            <td>{{ $trx->member->user->name ?? '-' }}</td>
-                            <td>{{ $trx->book->title ?? '-' }}</td>
-                            <td>{{ $trx->borrow_date?->format('d/m/Y') ?? '-' }}</td>
+                            <td>{{ $loan->user->name ?? '-' }}</td>
+                            <td>{{ $loan->book->title ?? '-' }}</td>
+                            <td>{{ $loan->borrow_date?->format('d/m/Y') ?? '-' }}</td>
                             <td>
-                                {{ $trx->due_date?->format('d/m/Y') ?? '-' }}
-                                @if($trx->status == 'borrowed' && $trx->due_date)
+                                {{ $loan->due_date?->format('d/m/Y') ?? '-' }}
+                                @if($loan->status == 'borrowed' && $loan->due_date)
                                     @if($days < 0)
                                         <span class="badge bg-danger ms-1">Terlambat!</span>
                                     @elseif($days == 0)
@@ -158,18 +163,18 @@
                             <td>
                                 @if($isReturned)
                                     <span class="badge bg-success">Dikembalikan</span>
-                                    @if($trx->return_date)
+                                    @if($loan->return_date)
                                         <div class="small text-muted mt-1">
-                                            {{ $trx->return_date->format('d/m/Y') }}
+                                            {{ $loan->return_date->format('d/m/Y') }}
                                         </div>
                                     @endif
                                 @else
-                                    <span class="badge bg-{{ $trx->status_color }}">
-                                        {{ $trx->status_text }}
+                                    <span class="badge bg-{{ $loan->status_color }}">
+                                        {{ $loan->status_text }}
                                     </span>
-                                    @if($trx->warning_message)
+                                    @if($loan->warning_message)
                                         <div class="small text-danger mt-1">
-                                            {{ $trx->warning_message }}
+                                            {{ $loan->warning_message }}
                                         </div>
                                     @endif
                                 @endif
@@ -214,13 +219,10 @@
                             </td>
                             <td>
                                 @if(!$isReturned)
-                                    <form action="{{ route('admin.transactions.return', $trx) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        @method('PUT')
-                                        <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Kembalikan buku ini?')">
-                                            <i class="fas fa-undo me-1"></i> Kembalikan
-                                        </button>
-                                    </form>
+                                    <a href="{{ route('admin.returns.show', $loan->loan_code) }}" class="btn btn-success btn-sm"
+                                       onclick="return confirm('Buka halaman pengembalian untuk {{ $loan->loan_code }}?')">
+                                        <i class="fas fa-undo me-1"></i> Kembalikan
+                                    </a>
                                 @else
                                     <span class="text-muted">-</span>
                                 @endif
@@ -233,23 +235,23 @@
             <div class="d-flex justify-content-between align-items-center mt-4">
                 <div class="text-muted small">
                     <i class="fas fa-info-circle me-1"></i>
-                    Menampilkan <strong>{{ $transactions->firstItem() }}</strong> - <strong>{{ $transactions->lastItem() }}</strong>
-                    dari <strong>{{ $transactions->total() }}</strong> transaksi
+                    Menampilkan <strong>{{ $loans->firstItem() }}</strong> - <strong>{{ $loans->lastItem() }}</strong>
+                    dari <strong>{{ $loans->total() }}</strong> peminjaman
                 </div>
                 <div>
-                    {{ $transactions->appends(request()->query())->links('pagination::bootstrap-5') }}
+                    {{ $loans->appends(request()->query())->links('pagination::bootstrap-5') }}
                 </div>
             </div>
         @else
             <div class="text-center py-5">
-                <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
-                <p class="text-muted">Tidak ada transaksi yang ditemukan</p>
+                <i class="fas fa-hand-holding fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Tidak ada peminjaman yang ditemukan</p>
                 @if(request('search') || request('status'))
-                    <a href="{{ route('admin.transactions.index') }}" class="btn btn-primary">
-                        <i class="fas fa-undo me-1"></i> Lihat Semua Transaksi
+                    <a href="{{ route('admin.loans.index') }}" class="btn btn-primary">
+                        <i class="fas fa-undo me-1"></i> Lihat Semua Peminjaman
                     </a>
                 @else
-                    <a href="{{ route('admin.transactions.create') }}" class="btn btn-primary">
+                    <a href="{{ route('admin.loans.create') }}" class="btn btn-primary">
                         <i class="fas fa-plus me-1"></i> Pinjam Buku Sekarang
                     </a>
                 @endif

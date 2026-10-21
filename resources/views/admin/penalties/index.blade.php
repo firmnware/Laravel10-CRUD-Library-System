@@ -66,7 +66,7 @@
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-search"></i></span>
                         <input type="text" name="search" class="form-control"
-                               placeholder="Cari kode transaksi, nama, email, no. HP, judul buku..."
+                               placeholder="Cari kode peminjaman, nama, email, no. HP, judul buku..."
                                value="{{ request('search') }}">
                     </div>
                 </div>
@@ -119,7 +119,7 @@
                     <thead class="table-light">
                         <tr>
                             <th>No</th>
-                            <th>Kode Transaksi</th>
+                            <th>Kode Peminjaman</th>
                             <th>Member</th>
                             <th>Judul Buku</th>
                             <th>Jatuh Tempo</th>
@@ -134,24 +134,24 @@
                         <tr>
                             <td>{{ $penalties->firstItem() + $index }}</td>
                             <td>
-                                <span class="badge bg-secondary">{{ $penalty->transaction->transaction_code }}</span>
+                                <span class="badge bg-secondary">{{ $penalty->loan->loan_code }}</span>
                             </td>
                             <td>
-                                {{ $penalty->transaction->member->user->name ?? '-' }}
-                                @if(!empty($penalty->transaction->member->user->email) || !empty($penalty->transaction->member->user->phone))
+                                {{ $penalty->loan->user->name ?? '-' }}
+                                @if(!empty($penalty->loan->user->email) || !empty($penalty->loan->user->phone))
                                     <div class="small text-muted">
-                                        {{ $penalty->transaction->member->user->email ?? '' }}
-                                        @if(!empty($penalty->transaction->member->user->email) && !empty($penalty->transaction->member->user->phone))
+                                        {{ $penalty->loan->user->email ?? '' }}
+                                        @if(!empty($penalty->loan->user->email) && !empty($penalty->loan->user->phone))
                                             <br>
                                         @endif
-                                        {{ $penalty->transaction->member->user->phone ?? '' }}
+                                        {{ $penalty->loan->user->phone ?? '' }}
                                     </div>
                                 @endif
                             </td>
-                            <td>{{ $penalty->transaction->book->title ?? '-' }}</td>
+                            <td>{{ $penalty->loan->book->title ?? '-' }}</td>
                             <td>
-                                {{ Carbon\Carbon::parse($penalty->transaction->due_date)->format('d/m/Y') }}
-                                @if(Carbon\Carbon::parse($penalty->transaction->due_date)->isPast() && $penalty->transaction->status == 'borrowed')
+                                {{ Carbon\Carbon::parse($penalty->loan->due_date)->format('d/m/Y') }}
+                                @if(Carbon\Carbon::parse($penalty->loan->due_date)->isPast() && $penalty->loan->status == 'borrowed')
                                     <span class="badge bg-danger ms-1">Terlambat!</span>
                                 @endif
                             </td>

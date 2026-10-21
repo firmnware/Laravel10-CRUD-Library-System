@@ -57,7 +57,20 @@ class BookController extends Controller
         }
 
         if ($request->filled('search')) {
-            $query->where('title', 'like', '%'.$request->search.'%');
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', '%'.$search.'%')
+                    ->orWhere('author', 'like', '%'.$search.'%');
+            });
+        }
+
+        //  FILTER BERDASARKAN KETERSEDIAAN
+        if ($request->filled('availability') && in_array($request->availability, ['available', 'out'])) {
+            if ($request->availability === 'available') {
+                $query->where('available_stock', '>', 0);
+            } else {
+                $query->where('available_stock', '<=', 0);
+            }
         }
 
         //  PAGINATION 20 BUKU PER HALAMAN
@@ -136,7 +149,7 @@ class BookController extends Controller
         // C4: hitung ulang dari jumlah pinjaman aktif, bukan rumus ad-hoc
         // "available + (stock - oldStock)" yang bisa menghasilkan stok minus
         // saat admin menurunkan stock saat buku sedang dipinjam.
-        $activeBorrows = $book->transactions()->where('status', 'borrowed')->count();
+        $activeBorrows = $book->loans()->where('status', 'borrowed')->count();
         $data['available_stock'] = max(0, (int) $request->stock - $activeBorrows);
 
         if ($request->hasFile('cover')) {
@@ -158,17 +171,17 @@ class BookController extends Controller
     // ========== HAPUS BUKU ==========
     public function destroy(Book $book)
     {
-        // C9 (temuan #13): FK transactions.book_id memakai ON DELETE CASCADE,
+        // C9 (temuan #13): FK loans.book_id memakai ON DELETE CASCADE,
         // jadi menghapus buku ikut menghapus transaksi & penalty tanpa suara.
         // Keputusan yang dikunci: tolak penghapusan selama ada riwayat
         // peminjaman apa pun — menjamin tidak ada data transaksi yang hilang
         // tanpa perlu ganti FK atau menambah soft-delete.
-        if ($book->transactions()->where('status', 'borrowed')->exists()) {
+        if ($book->loans()->where('status', 'borrowed')->exists()) {
             return redirect()->route('admin.books.index')
                 ->with('error', 'Buku masih dipinjam dan tidak bisa dihapus');
         }
 
-        if ($book->transactions()->exists()) {
+        if ($book->loans()->exists()) {
             return redirect()->route('admin.books.index')
                 ->with('error', 'Buku memiliki riwayat peminjaman dan tidak bisa dihapus');
         }

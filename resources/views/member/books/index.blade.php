@@ -8,6 +8,73 @@
         <h5 class="mb-0"><i class="fas fa-book me-2"></i> Katalog Buku Perpustakaan</h5>
     </div>
     <div class="card-body">
+        <!-- FORM SEARCH & FILTER -->
+        <form method="GET" action="{{ route('member.books.index') }}" class="mb-4">
+            <div class="row g-2">
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" name="search" class="form-control"
+                               placeholder="Cari judul atau penulis..."
+                               value="{{ request('search') }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="category" class="form-control">
+                        <option value="">-- Semua Kategori --</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category->id }}" {{ request('category') == $category->id ? 'selected' : '' }}>
+                                {{ $category->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="availability" class="form-control">
+                        <option value="">-- Semua Stok --</option>
+                        <option value="available" {{ request('availability') == 'available' ? 'selected' : '' }}>Tersedia</option>
+                        <option value="out" {{ request('availability') == 'out' ? 'selected' : '' }}>Habis</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-1"></i> Filter
+                    </button>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-md-12">
+                    @if(request('search') || request('category') || request('availability'))
+                        <div class="d-flex gap-2 flex-wrap align-items-center">
+                            <span class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Menampilkan <strong>{{ $books->total() }}</strong> buku
+                            </span>
+                            @if(request('search'))
+                                <span class="badge bg-info">Pencarian: "{{ request('search') }}"</span>
+                            @endif
+                            @if(request('category') && $categories->firstWhere('id', request('category')))
+                                <span class="badge bg-info">Kategori: "{{ $categories->firstWhere('id', request('category'))->name }}"</span>
+                            @endif
+                            @if(request('availability') == 'available')
+                                <span class="badge bg-success">Stok: Tersedia</span>
+                            @elseif(request('availability') == 'out')
+                                <span class="badge bg-danger">Stok: Habis</span>
+                            @endif
+                            <a href="{{ route('member.books.index') }}" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-times me-1"></i> Reset Filter
+                            </a>
+                        </div>
+                    @else
+                        <span class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Menampilkan <strong>{{ $books->total() }}</strong> buku di katalog
+                        </span>
+                    @endif
+                </div>
+            </div>
+        </form>
+
         @if($books->count() > 0)
             <div class="row">
                 @foreach($books as $book)
@@ -57,14 +124,25 @@
             </div>
             
             <!-- menampilkan total buku  -->
-            <div class="mt-3 text-muted text-center">
-                <i class="fas fa-info-circle me-1"></i> 
-                Menampilkan <strong>{{ $books->count() }}</strong> buku di katalog
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="text-muted small">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Menampilkan <strong>{{ $books->firstItem() }}</strong> - <strong>{{ $books->lastItem() }}</strong>
+                    dari <strong>{{ $books->total() }}</strong> buku di katalog
+                </div>
+                <div>
+                    {{ $books->appends(request()->query())->links('pagination::bootstrap-5') }}
+                </div>
             </div>
         @else
             <div class="text-center py-5">
                 <i class="fas fa-book fa-3x text-muted mb-3"></i>
                 <p class="text-muted">Belum ada buku di katalog</p>
+                @if(request('search') || request('category') || request('availability'))
+                    <a href="{{ route('member.books.index') }}" class="btn btn-primary">
+                        <i class="fas fa-undo me-1"></i> Lihat Semua Buku
+                    </a>
+                @endif
             </div>
         @endif
     </div>

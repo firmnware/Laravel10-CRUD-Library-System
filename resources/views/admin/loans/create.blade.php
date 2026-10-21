@@ -15,7 +15,7 @@
             </div>
         @endif
 
-        <form action="{{ route('admin.transactions.store') }}" method="POST" id="borrowForm">
+        <form action="{{ route('admin.loans.store') }}" method="POST" id="borrowForm">
             @csrf
             <div class="row">
                 <div class="col-md-12 mb-3">
@@ -24,7 +24,7 @@
                         <option value="">-- Ketik nama, kode, email, atau no. HP --</option>
                         @foreach($members as $member)
                             <option value="{{ $member->id }}" {{ old('member_id') == $member->id ? 'selected' : '' }}>
-                                {{ $member->user->name }} ({{ $member->member_code }}) - {{ $member->user->email }}{{ $member->user->phone ? ' - '.$member->user->phone : '' }}
+                                {{ $member->name }} ({{ $member->member_code }}) - {{ $member->email }}{{ $member->phone ? ' - '.$member->phone : '' }}
                             </option>
                         @endforeach
                     </select>
@@ -52,23 +52,29 @@
                     <small class="text-muted" id="book_count">Total buku tersedia: {{ $books->count() }}</small>
                 </div>
 
+                {{-- Bagian 4: tanggal pinjam = HARI INI saja (readonly, divalidasi server). --}}
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-semibold">Tanggal Pinjam <span class="text-danger">*</span></label>
-                    <input type="date" name="borrow_date" class="form-control @error('borrow_date') is-invalid @enderror" 
-                           value="{{ old('borrow_date', date('Y-m-d')) }}" required>
+                    <input type="date" name="borrow_date" class="form-control @error('borrow_date') is-invalid @enderror"
+                           value="{{ old('borrow_date', date('Y-m-d')) }}" readonly>
+                    <small class="text-muted">Peminjaman dicatat hari ini (tidak bisa diubah)</small>
                     @error('borrow_date')
                         <span class="invalid-feedback">{{ $message }}</span>
                     @enderror
                 </div>
 
+                {{-- Bagian 4: jatuh tempo mengikuti tanggal pinjam, default +7 hari,
+                     rentang valid +1 s/d +{{ $maxLoanDays }} hari (dijaga min/max + server). --}}
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-semibold">Tanggal Jatuh Tempo <span class="text-danger">*</span></label>
-                    <input type="date" name="due_date" class="form-control @error('due_date') is-invalid @enderror" 
-                           value="{{ old('due_date', date('Y-m-d', strtotime('+7 days'))) }}" required>
+                    <input type="date" name="due_date" id="due_date" class="form-control @error('due_date') is-invalid @enderror"
+                           value="{{ old('due_date', date('Y-m-d', strtotime('+7 days'))) }}"
+                           min="{{ date('Y-m-d', strtotime('+1 day')) }}"
+                           max="{{ date('Y-m-d', strtotime('+'.$maxLoanDays.' days')) }}" required>
                     @error('due_date')
                         <span class="invalid-feedback">{{ $message }}</span>
                     @enderror
-                    <small class="text-muted">Masa pinjam standar 7 hari</small>
+                    <small class="text-muted">Masa pinjam maksimal {{ $maxLoanDays }} hari sejak tanggal pinjam</small>
                 </div>
             </div>
 
@@ -81,7 +87,7 @@
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-save me-2"></i> Pinjam
                 </button>
-                <a href="{{ route('admin.transactions.index') }}" class="btn btn-secondary">
+                <a href="{{ route('admin.loans.index') }}" class="btn btn-secondary">
                     <i class="fas fa-times me-2"></i> Batal
                 </a>
             </div>
@@ -104,6 +110,25 @@
             create: false,
             sortField: { field: 'text', direction: 'asc' },
             placeholder: '-- Ketik judul atau kategori buku --',
+        });
+
+        // Bagian 4: jatuh tempo mengikuti tanggal pinjam.
+        // Tanggal pinjam terkunci hari ini, jadi cukup dihitung dari "sekarang":
+        // default +7 hari, rentang valid +1 .. +{{ $maxLoanDays }} hari.
+        var defaultDueDays = {{ $defaultLoanDays }};
+        var maxDueDays = {{ $maxLoanDays }};
+        var dueInput = document.getElementById('due_date');
+
+        function formatDate(d) {
+            return d.getFullYear() + '-' +
+                String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                String(d.getDate()).padStart(2, '0');
+        }
+
+        document.getElementById('borrowForm').addEventListener('reset', function () {
+            var d = new Date();
+            d.setDate(d.getDate() + defaultDueDays);
+            dueInput.value = formatDate(d);
         });
     });
 </script>

@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\Member;
+use App\Models\Loan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -16,7 +16,7 @@ class MemberTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->admin = User::factory()->create(['role' => 'admin']);
+        $this->admin = User::factory()->admin()->create();
     }
 
     public function test_admin_can_create_a_member(): void
@@ -31,11 +31,10 @@ class MemberTest extends TestCase
 
         $response->assertRedirect('/admin/members');
 
-        $user = User::where('email', 'budi@example.com')->firstOrFail();
-        $this->assertSame('member', $user->role);
-        $this->assertSame('active', $user->status);
-
-        $member = Member::where('user_id', $user->id)->firstOrFail();
+        // Pasca-merge: member = baris User ber-role 'member' (tabel members
+        // sudah tidak ada) dengan kode member yang diisi otomatis.
+        $member = User::where('email', 'budi@example.com')->firstOrFail();
+        $this->assertSame('member', $member->role);
         $this->assertSame('active', $member->status);
         $this->assertNotEmpty($member->member_code);
     }
@@ -55,7 +54,7 @@ class MemberTest extends TestCase
 
     public function test_member_list_is_paginated_by_10(): void
     {
-        Member::factory()->count(14)->create();
+        User::factory()->count(14)->create(); // default factory = role member
 
         $this->actingAs($this->admin)
             ->get('/admin/members')
@@ -65,35 +64,33 @@ class MemberTest extends TestCase
 
     // ---------- TOGGLE STATUS ----------
 
-    public function test_toggling_member_blocks_both_member_and_user_rows(): void
+    public function test_toggling_member_deactivates_the_member_row(): void
     {
-        $member = Member::factory()->create(['status' => 'active']);
+        // Pasca-merge: satu kolom users.status menentukan keaktifan member.
+        $member = User::factory()->create(['status' => 'active']);
 
         $response = $this->actingAs($this->admin)
             ->put('/admin/members/'.$member->id.'/toggle-status');
 
         $response->assertRedirect('/admin/members');
 
-        $this->assertSame('blocked', $member->refresh()->status);
-        $this->assertSame('inactive', $member->user->refresh()->status);
+        $this->assertSame('inactive', $member->refresh()->status);
         $this->assertFalse($member->canBorrow());
     }
 
-    public function test_toggling_again_reactivates_member_and_user(): void
+    public function test_toggling_again_reactivates_member(): void
     {
-        $member = Member::factory()->blocked()->create();
-        $member->user->update(['status' => 'inactive']);
+        $member = User::factory()->blocked()->create();
 
         $this->actingAs($this->admin)
             ->put('/admin/members/'.$member->id.'/toggle-status');
 
         $this->assertSame('active', $member->refresh()->status);
-        $this->assertSame('active', $member->user->refresh()->status);
     }
 
     // ---------- REGISTRASI ----------
 
-    public function test_registration_creates_user_and_member(): void
+    public function test_registration_creates_member_user(): void
     {
         $response = $this->post('/register', [
             'name' => 'Anggota Baru',
@@ -104,10 +101,9 @@ class MemberTest extends TestCase
 
         $response->assertRedirect('/member/dashboard');
 
-        $user = User::where('email', 'anggota@example.com')->firstOrFail();
-        $member = Member::where('user_id', $user->id)->firstOrFail();
+        $member = User::where('email', 'anggota@example.com')->firstOrFail();
 
-        $this->assertSame('member', $user->role);
+        $this->assertSame('member', $member->role);
         $this->assertSame('active', $member->status);
     }
 
@@ -125,7 +121,7 @@ class MemberTest extends TestCase
             $this->post('/logout');
         }
 
-        $codes = Member::pluck('member_code');
+        $codes = User::where('role', 'member')->pluck('member_code');
 
         $this->assertCount(5, $codes);
         $this->assertCount(5, $codes->unique());
@@ -135,14 +131,14 @@ class MemberTest extends TestCase
 
     public function test_blocked_member_cannot_borrow_but_active_one_can(): void
     {
-        $this->assertFalse(Member::factory()->blocked()->create()->canBorrow());
-        $this->assertTrue(Member::factory()->create()->canBorrow());
+        $this->assertFalse(User::factory()->blocked()->create()->canBorrow());
+        $this->assertTrue(User::factory()->create()->canBorrow());
     }
 
     public function test_member_with_three_active_borrows_cannot_borrow_more(): void
     {
-        $member = Member::factory()->create();
-        \App\Models\Transaction::factory()->count(3)->for($member)->create();
+        $member = User::factory()->create();
+        Loan::factory()->count(3)->for($member)->create();
 
         $this->assertSame(3, $member->getActiveBorrowsCount());
         $this->assertFalse($member->canBorrow());
@@ -168,7 +164,7 @@ class MemberTest extends TestCase
             'password' => 'secret123',
         ]);
 
-        $codes = Member::pluck('member_code');
+        $codes = User::where('role', 'member')->pluck('member_code');
 
         $this->assertCount(2, $codes);
         $this->assertCount(2, $codes->unique());
@@ -176,16 +172,16 @@ class MemberTest extends TestCase
 
     public function test_member_code_stays_unique_after_delete_and_recreate(): void
     {
-        $first = Member::factory()->create();
-        $second = Member::factory()->create();
-        $third = Member::factory()->create();
+        $first = User::factory()->create();
+        $second = User::factory()->create();
+        $third = User::factory()->create();
 
-        // Hapus yang paling awal, lalu buat member baru.
+        // Hapus member yang paling awal, lalu buat member baru.
         $first->delete();
 
-        $fourth = Member::factory()->create();
+        $fourth = User::factory()->create();
 
-        $codes = Member::pluck('member_code');
+        $codes = User::where('role', 'member')->pluck('member_code');
 
         $this->assertCount(3, $codes);
         $this->assertCount(3, $codes->unique(), 'kode member tidak boleh tabrakan');
@@ -194,14 +190,14 @@ class MemberTest extends TestCase
 
     public function test_explicit_member_code_is_not_overwritten_by_hook(): void
     {
-        $member = Member::factory()->create(['member_code' => 'MBR-CUSTOM']);
+        $member = User::factory()->create(['member_code' => 'MBR-CUSTOM']);
 
         $this->assertSame('MBR-CUSTOM', $member->fresh()->member_code);
     }
 
     public function test_generated_member_code_format(): void
     {
-        $member = Member::factory()->create();
+        $member = User::factory()->create();
 
         $this->assertMatchesRegularExpression('/^MBR-\d{5}$/', $member->member_code);
     }
@@ -210,24 +206,22 @@ class MemberTest extends TestCase
 
     public function test_blocked_member_session_is_terminated_on_next_request(): void
     {
-        $member = Member::factory()->create();
-        $user = $member->user;
+        $member = User::factory()->create();
 
         // Pastikan sesi aktif dulu.
-        $this->actingAs($user)->get('/member/dashboard')->assertOk();
+        $this->actingAs($member)->get('/member/dashboard')->assertOk();
 
-        // Admin memblokir member (members.blocked + users.inactive).
-        $member->update(['status' => 'blocked']);
-        $user->update(['status' => 'inactive']);
+        // Admin memblokir member (users.status -> inactive).
+        $member->update(['status' => 'inactive']);
 
         // Request berikutnya dengan sesi lama harus ditendang ke login.
-        $this->actingAs($user->fresh())->get('/member/dashboard')->assertRedirect('/login');
+        $this->actingAs($member->fresh())->get('/member/dashboard')->assertRedirect('/login');
         $this->assertGuest();
     }
 
     public function test_blocked_admin_session_is_terminated_on_next_request(): void
     {
-        $admin = User::factory()->create(['role' => 'admin', 'status' => 'active']);
+        $admin = User::factory()->admin()->create(['status' => 'active']);
 
         $this->actingAs($admin)->get('/admin/dashboard')->assertOk();
 

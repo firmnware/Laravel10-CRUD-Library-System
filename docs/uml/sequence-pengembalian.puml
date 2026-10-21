@@ -1,0 +1,51 @@
+@startuml sequence-pengembalian
+title Sequence - Pengembalian Buku (PUT admin/transactions/{id}/return)
+' Sumber: routes/web.php:58 + TransactionController@returnBook
+autonumber
+actor Admin
+participant "TransactionController" as C
+participant "Transaction" as T
+participant "Book" as B
+participant "Penalty" as P
+database DB
+
+Admin -> C : returnBook(transaction)
+activate C
+C -> T : cek status == 'returned'?
+activate T
+alt sudah dikembalikan
+  T --> C : status = returned
+  deactivate T
+  C --> Admin : 302 back "sudah dikembalikan"
+  deactivate C
+else masih borrowed
+  T --> C : status = borrowed
+  deactivate T
+  C -> DB : BEGIN
+  activate DB
+  C -> C : returnDate = today()\ndueDate = transaction.due_date
+  C -> C : returnDate > dueDate ?\ndaysLate + fine = daysLate x fine_per_day
+  C -> T : update(return_date, status=returned)
+  activate T
+  T --> C : ok
+  deactivate T
+  C -> B : increaseStock()\nUPDATE available_stock + 1
+  activate B
+  B --> C : ok
+  deactivate B
+  opt terlambat (daysLate > 0)
+    C -> P : create(transaction_id, member_id,\ndays_late, fine_amount, unpaid)
+    activate P
+    P --> C : penalty baru
+    deactivate P
+  end
+  C -> DB : COMMIT
+  deactivate DB
+  alt terlambat
+    C --> Admin : redirect index + "Terlambat N hari, denda Rp ..."
+  else tepat waktu
+    C --> Admin : redirect index + "tepat waktu!"
+  end
+  deactivate C
+end
+@enduml

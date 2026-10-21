@@ -191,7 +191,7 @@ class BookTest extends TestCase
         // 0 + (1 - 5) = -4 saat 5 eksemplar sedang dipinjam.
         // Rumus baru: max(0, stock - pinjaman_aktif) = max(0, 1 - 5) = 0.
         $book = Book::factory()->create(['stock' => 5, 'available_stock' => 0]);
-        \App\Models\Transaction::factory()->count(5)->create([
+        \App\Models\Loan::factory()->count(5)->create([
             'book_id' => $book->id,
             'status' => 'borrowed',
         ]);
@@ -213,8 +213,8 @@ class BookTest extends TestCase
     public function test_available_stock_accounts_for_active_borrows_on_update(): void
     {
         $book = Book::factory()->create(['stock' => 5, 'available_stock' => 3]);
-        $member = \App\Models\Member::factory()->create();
-        \App\Models\Transaction::factory()->count(2)->for($member)->for($book)->create([
+        $member = \App\Models\User::factory()->create();
+        \App\Models\Loan::factory()->count(2)->for($member)->for($book)->create([
             'status' => 'borrowed',
         ]);
 
@@ -260,10 +260,10 @@ class BookTest extends TestCase
 
     public function test_book_with_active_borrow_cannot_be_deleted(): void
     {
-        // C9 (temuan #13): FK transactions.book_id ON DELETE CASCADE —
-        // tanpa guard ini, menghapus buku ikut menghapus transaksi & penalty.
+        // C9 (temuan #13): FK loans.book_id ON DELETE CASCADE —
+        // tanpa guard ini, menghapus buku ikut menghapus peminjaman & penalty.
         $book = Book::factory()->create();
-        $transaction = \App\Models\Transaction::factory()->create([
+        $loan = \App\Models\Loan::factory()->create([
             'book_id' => $book->id,
             'status' => 'borrowed',
         ]);
@@ -272,7 +272,7 @@ class BookTest extends TestCase
 
         $response->assertSessionHas('error');
         $this->assertDatabaseHas('books', ['id' => $book->id]);
-        $this->assertDatabaseHas('transactions', ['id' => $transaction->id]);
+        $this->assertDatabaseHas('loans', ['id' => $loan->id]);
     }
 
     public function test_book_with_returned_history_cannot_be_deleted(): void
@@ -280,19 +280,19 @@ class BookTest extends TestCase
         // Buku dengan riwayat (sudah kembali) pun ditolak — kalau diizinkan,
         // kaskade FK akan menghapus baris transaksi beserta penaltinya.
         $book = Book::factory()->create();
-        $transaction = \App\Models\Transaction::factory()->returned()->create([
+        $loan = \App\Models\Loan::factory()->returned()->create([
             'book_id' => $book->id,
         ]);
         $penalty = \App\Models\Penalty::factory()->create([
-            'transaction_id' => $transaction->id,
-            'member_id' => $transaction->member_id,
+            'loan_id' => $loan->id,
+            'member_id' => $loan->member_id,
         ]);
 
         $response = $this->actingAs($this->admin)->delete('/admin/books/'.$book->id);
 
         $response->assertSessionHas('error');
         $this->assertDatabaseHas('books', ['id' => $book->id]);
-        $this->assertDatabaseHas('transactions', ['id' => $transaction->id]);
+        $this->assertDatabaseHas('loans', ['id' => $loan->id]);
         $this->assertDatabaseHas('penalties', ['id' => $penalty->id]);
     }
 }

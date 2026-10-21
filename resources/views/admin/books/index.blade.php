@@ -18,6 +18,59 @@
             </div>
         @endif
 
+        <!-- FORM SEARCH & FILTER -->
+        <form method="GET" action="{{ route('admin.books.index') }}" class="mb-4">
+            <div class="row g-2">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" name="search" class="form-control"
+                               placeholder="Cari judul buku..."
+                               value="{{ request('search') }}">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <select name="category" class="form-select">
+                        <option value="">-- Semua Kategori --</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category->id }}" {{ request('category') == $category->id ? 'selected' : '' }}>
+                                {{ $category->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter me-1"></i> Filter
+                    </button>
+                </div>
+            </div>
+            <div class="mt-2">
+                @if(request('search') || request('category'))
+                    <div class="d-flex gap-2 flex-wrap align-items-center">
+                        <span class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Menampilkan <strong>{{ $books->total() }}</strong> buku
+                        </span>
+                        @if(request('search'))
+                            <span class="badge bg-info">Pencarian: "{{ request('search') }}"</span>
+                        @endif
+                        @if(request('category') && $categories->firstWhere('id', request('category')))
+                            <span class="badge bg-info">Kategori: "{{ $categories->firstWhere('id', request('category'))->name }}"</span>
+                        @endif
+                        <a href="{{ route('admin.books.index') }}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-times me-1"></i> Reset Filter
+                        </a>
+                    </div>
+                @else
+                    <span class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Menampilkan <strong>{{ $books->total() }}</strong> buku
+                    </span>
+                @endif
+            </div>
+        </form>
+
         @if($books->count() > 0)
             <div class="table-responsive">
                 <table class="table table-bordered table-hover align-middle">
@@ -36,7 +89,7 @@
                     <tbody>
                         @foreach($books as $index => $book)
                         <tr>
-                            <td>{{ $index + 1 }}</td>
+                            <td>{{ $books->firstItem() + $index }}</td>
                             <td>
                                 @if($book->cover && Storage::disk('public')->exists($book->cover))
                                     <img src="{{ asset('storage/' . $book->cover) }}" 
@@ -97,10 +150,15 @@
                 </table>
             </div>
             
-            <!--  menampilkan total buku -->
-            <div class="mt-3 text-muted">
-                <i class="fas fa-info-circle me-1"></i> 
-                Menampilkan <strong>{{ $books->count() }}</strong> buku
+            <!-- Info jumlah buku + Pagination -->
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
+                <div class="text-muted">
+                    <i class="fas fa-info-circle me-1"></i> 
+                    Menampilkan <strong>{{ $books->firstItem() }}</strong>-<strong>{{ $books->lastItem() }}</strong> dari <strong>{{ $books->total() }}</strong> buku
+                </div>
+                <nav aria-label="Navigasi halaman buku">
+                    {{ $books->links() }}
+                </nav>
             </div>
         @else
             <div class="text-center py-5">
