@@ -97,7 +97,7 @@ class BookController extends Controller
             'title' => 'required|string|max:255',
             'isbn' => 'required|string|unique:books',
             'stock' => 'required|integer|min:1',
-            'category_id' => 'nullable|exists:categories,id',
+            'category_id' => 'nullable|exists:categories,categories_id',
             'cover' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
@@ -139,7 +139,8 @@ class BookController extends Controller
     {
         $request->validate([
             'title' => 'required|string|max:255',
-            'isbn' => 'required|string|unique:books,isbn,'.$book->id,
+            // Kolom ignore unique disebut eksplisit karena PK books bukan 'id'.
+            'isbn' => 'required|string|unique:books,isbn,'.$book->getKey().',books_id',
             'stock' => 'required|integer|min:1',
             'cover' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);

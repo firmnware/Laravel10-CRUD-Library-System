@@ -26,7 +26,7 @@ class LoanBorrowTest extends TestCase
     {
         return $this->actingAs($this->admin)->post('/admin/loans', array_merge([
             'member_id' => $member->id,
-            'book_id' => $book->id,
+            'book_id' => $book->getKey(),
             'borrow_date' => now()->toDateString(),
             'due_date' => now()->addDays(7)->toDateString(),
         ], $overrides));
@@ -43,7 +43,7 @@ class LoanBorrowTest extends TestCase
 
         $this->assertDatabaseHas('loans', [
             'member_id' => $member->id,
-            'book_id' => $book->id,
+            'book_id' => $book->getKey(),
             'status' => 'borrowed',
         ]);
         $this->assertSame(3, $book->refresh()->available_stock);
@@ -59,7 +59,7 @@ class LoanBorrowTest extends TestCase
         $response = $this->borrow($member, $extraBook);
 
         $response->assertSessionHas('error', fn ($message) => str_contains($message, 'maksimal 3 buku'));
-        $this->assertDatabaseMissing('loans', ['book_id' => $extraBook->id]);
+        $this->assertDatabaseMissing('loans', ['book_id' => $extraBook->getKey()]);
         $this->assertSame(3, $member->getActiveBorrowsCount());
     }
 
@@ -71,7 +71,7 @@ class LoanBorrowTest extends TestCase
         $response = $this->borrow($member, $book);
 
         $response->assertSessionHas('error', fn ($message) => str_contains($message, 'status tidak aktif'));
-        $this->assertDatabaseMissing('loans', ['book_id' => $book->id]);
+        $this->assertDatabaseMissing('loans', ['book_id' => $book->getKey()]);
     }
 
     public function test_member_with_unpaid_penalty_cannot_borrow(): void
@@ -79,7 +79,7 @@ class LoanBorrowTest extends TestCase
         $member = User::factory()->create();
         $lateLoan = Loan::factory()->for($member)->returnedLate(3)->create();
         Penalty::factory()->create([
-            'loan_id' => $lateLoan->id,
+            'loan_id' => $lateLoan->getKey(),
             'member_id' => $member->id,
         ]);
 
@@ -88,7 +88,7 @@ class LoanBorrowTest extends TestCase
         $response = $this->borrow($member, $book);
 
         $response->assertSessionHas('error', 'Member memiliki denda belum dibayar');
-        $this->assertDatabaseMissing('loans', ['book_id' => $book->id]);
+        $this->assertDatabaseMissing('loans', ['book_id' => $book->getKey()]);
     }
 
     public function test_borrow_rejected_when_no_stock_available(): void
@@ -99,7 +99,7 @@ class LoanBorrowTest extends TestCase
         $response = $this->borrow($member, $book);
 
         $response->assertSessionHas('error');
-        $this->assertDatabaseMissing('loans', ['book_id' => $book->id]);
+        $this->assertDatabaseMissing('loans', ['book_id' => $book->getKey()]);
         $this->assertSame(0, $book->refresh()->available_stock);
     }
 
@@ -172,7 +172,7 @@ class LoanBorrowTest extends TestCase
 
         $this->borrow($member, $book);
 
-        $code = Loan::latest('id')->first()->loan_code;
+        $code = Loan::latest('loans_id')->first()->loan_code;
         // C1: suffix kini 6 karakter acak (bukan rand(100,999)).
         $this->assertMatchesRegularExpression('/^PJM-\d{8}-[A-Z0-9]{6}$/', $code);
     }
@@ -193,7 +193,7 @@ class LoanBorrowTest extends TestCase
             $rows[] = [
                 'loan_code' => $code,
                 'member_id' => $member->id,
-                'book_id' => $book->id,
+                'book_id' => $book->getKey(),
                 'borrow_date' => now()->toDateString(),
                 'due_date' => now()->addDays(7)->toDateString(),
                 'status' => 'borrowed',

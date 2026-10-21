@@ -13,17 +13,23 @@ class DatabaseSeeder extends Seeder
 {
     public function run()
     {
-        // ========== BUAT ADMIN ==========
-        $admin = User::create([
-            'name' => 'Administrator',
-            'email' => 'admin@gmail.com',
-            'password' => Hash::make('password123'),
-            'role' => 'admin',
-            'status' => 'active',
-            'phone' => '081234567890',
-            'address' => 'Jl. Admin No. 1',
-            'last_login_at' => now(),
-        ]);
+        // ========== BUAT 5 ADMIN (keputusan user) ==========
+        $admins = [
+            ['name' => 'Administrator', 'email' => 'admin@gmail.com', 'phone' => '081234567890', 'address' => 'Jl. Admin No. 1'],
+            ['name' => 'Admin Dua', 'email' => 'admin2@gmail.com', 'phone' => '081234567893', 'address' => 'Jl. Admin No. 2'],
+            ['name' => 'Admin Tiga', 'email' => 'admin3@gmail.com', 'phone' => '081234567894', 'address' => 'Jl. Admin No. 3'],
+            ['name' => 'Admin Empat', 'email' => 'admin4@gmail.com', 'phone' => '081234567895', 'address' => 'Jl. Admin No. 4'],
+            ['name' => 'Admin Lima', 'email' => 'admin5@gmail.com', 'phone' => '081234567896', 'address' => 'Jl. Admin No. 5'],
+        ];
+
+        foreach ($admins as $adminData) {
+            User::create($adminData + [
+                'password' => Hash::make('password123'),
+                'role' => 'admin',
+                'status' => 'active',
+                'last_login_at' => now(),
+            ]);
+        }
 
         // ==========  BUAT MEMBER DEFAULT UNTUK LOGIN ==========
         // Member 1: member@gmail.com

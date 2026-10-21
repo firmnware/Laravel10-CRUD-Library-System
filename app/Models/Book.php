@@ -9,6 +9,8 @@ class Book extends Model
 {
     use HasFactory;
 
+    protected $primaryKey = 'books_id';
+
     protected $fillable = [
         'category_id',
         'title',
@@ -40,12 +42,15 @@ class Book extends Model
 
     public function category()
     {
-        return $this->belongsTo(Category::class);
+        // FK/ownerKey eksplisit karena PK tabel bisnis bukan 'id' lagi —
+        // guess otomatis Laravel melenceng (category_categories_id).
+        return $this->belongsTo(Category::class, 'category_id', 'categories_id');
     }
 
     public function loans()
     {
-        return $this->hasMany(Loan::class);
+        // FK/localKey eksplisit — guess otomatis menghasilkan loans.book_books_id.
+        return $this->hasMany(Loan::class, 'book_id', 'books_id');
     }
 
     public function isAvailable()

@@ -38,12 +38,12 @@ class SmokeTest extends TestCase
         // 1) PINJAM -------------------------------------------------------
         $this->actingAs($this->admin)->post('/admin/loans', [
             'member_id' => $this->member->id,
-            'book_id' => $this->book->id,
+            'book_id' => $this->book->getKey(),
             'borrow_date' => now()->toDateString(),
             'due_date' => now()->addDays(5)->toDateString(),
         ])->assertRedirect('/admin/loans');
 
-        $loan = Loan::latest('id')->firstOrFail();
+        $loan = Loan::latest('loans_id')->firstOrFail();
 
         $this->assertSame('borrowed', $loan->status);
         $this->assertSame(1, $this->book->refresh()->available_stock);
@@ -69,7 +69,7 @@ class SmokeTest extends TestCase
         $this->assertSame(2, $this->book->refresh()->available_stock);
 
         // 4) PENALTY MUNCUL ------------------------------------------------
-        $penalty = Penalty::where('loan_id', $loan->id)->firstOrFail();
+        $penalty = Penalty::where('loan_id', $loan->getKey())->firstOrFail();
 
         $this->assertSame(3, $penalty->days_late);
         $this->assertSame(6000, (int) $penalty->fine_amount);
@@ -84,7 +84,7 @@ class SmokeTest extends TestCase
 
         // 6) BAYAR -----------------------------------------------------------
         $this->actingAs($this->admin)
-            ->put('/admin/penalties/'.$penalty->id.'/pay')
+            ->put('/admin/penalties/'.$penalty->getKey().'/pay')
             ->assertRedirect('/admin/penalties');
 
         $penalty->refresh();
@@ -98,7 +98,7 @@ class SmokeTest extends TestCase
         $anotherBook = Book::factory()->create(['stock' => 1, 'available_stock' => 1]);
         $this->actingAs($this->admin)->post('/admin/loans', [
             'member_id' => $this->member->id,
-            'book_id' => $anotherBook->id,
+            'book_id' => $anotherBook->getKey(),
             'borrow_date' => now()->toDateString(),
             'due_date' => now()->addDays(5)->toDateString(),
         ])->assertRedirect('/admin/loans');

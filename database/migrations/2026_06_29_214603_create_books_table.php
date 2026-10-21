@@ -9,8 +9,8 @@ return new class extends Migration
     public function up()
     {
         Schema::create('books', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('category_id')->nullable()->constrained('categories')->onDelete('set null');
+            $table->id('books_id');
+            $table->foreignId('category_id')->nullable()->constrained('categories', 'categories_id')->onDelete('set null');
             $table->string('title', 255);
             $table->string('author', 255)->nullable();
             $table->string('publisher', 255)->nullable();

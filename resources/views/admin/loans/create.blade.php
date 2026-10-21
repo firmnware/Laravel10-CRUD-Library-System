@@ -40,8 +40,8 @@
                     <select name="book_id" id="book_select" class="form-control @error('book_id') is-invalid @enderror" required>
                         <option value="">-- Ketik judul atau kategori buku --</option>
                         @foreach($books as $book)
-                            <option value="{{ $book->id }}"
-                                    {{ old('book_id') == $book->id ? 'selected' : '' }}>
+                            <option value="{{ $book->getKey() }}"
+                                    {{ old('book_id') == $book->getKey() ? 'selected' : '' }}>
                                 {{ $book->title }} (Stok: {{ $book->available_stock }}) - {{ $book->category->name ?? 'Tanpa Kategori' }}
                             </option>
                         @endforeach

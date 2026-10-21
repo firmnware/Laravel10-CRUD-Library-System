@@ -73,7 +73,7 @@ class LoanController extends Controller
         // Bagian 4: tanggal pinjam HANYA hari ini — tidak boleh masa lampau atau masa depan.
         $request->validate([
             'member_id' => 'required|exists:users,id',
-            'book_id' => 'required|exists:books,id',
+            'book_id' => 'required|exists:books,books_id',
             'borrow_date' => [
                 'required', 'date',
                 function ($attribute, $value, $fail) {

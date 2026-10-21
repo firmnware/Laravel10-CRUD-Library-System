@@ -98,7 +98,7 @@ class RoleAccessTest extends TestCase
         $user = $this->member();
         $book = Book::factory()->create();
 
-        $this->actingAs($user)->get('/member/books/'.$book->id)->assertOk();
-        $this->actingAs($user)->get('/admin/books/'.$book->id.'/edit')->assertForbidden();
+        $this->actingAs($user)->get('/member/books/'.$book->getKey())->assertOk();
+        $this->actingAs($user)->get('/admin/books/'.$book->getKey().'/edit')->assertForbidden();
     }
 }

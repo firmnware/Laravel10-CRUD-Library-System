@@ -11,15 +11,16 @@ class Loan extends Model
 {
     use HasFactory;
 
+    // PK dinamai <tabel>_id; data pengembalian ada di tabel returns (LoanReturn).
+    protected $primaryKey = 'loans_id';
+
     protected $fillable = [
-        'loan_code', 'member_id', 'book_id',
-        'borrow_date', 'due_date', 'return_date', 'status',
+        'loan_code', 'member_id', 'book_id', 'borrow_date', 'due_date', 'status',
     ];
 
     protected $casts = [
         'borrow_date' => 'date',
         'due_date' => 'date',
-        'return_date' => 'date',
     ];
 
     public function user()
@@ -29,12 +30,17 @@ class Loan extends Model
 
     public function book()
     {
-        return $this->belongsTo(Book::class);
+        return $this->belongsTo(Book::class, 'book_id', 'books_id');
     }
 
     public function penalty()
     {
-        return $this->hasOne(Penalty::class);
+        return $this->hasOne(Penalty::class, 'loan_id', 'loans_id');
+    }
+
+    public function loanReturn()
+    {
+        return $this->hasOne(LoanReturn::class, 'loan_id', 'loans_id');
     }
 
     /**

@@ -23,7 +23,7 @@
                     <select name="category" class="form-control">
                         <option value="">-- Semua Kategori --</option>
                         @foreach($categories as $category)
-                            <option value="{{ $category->id }}" {{ request('category') == $category->id ? 'selected' : '' }}>
+                            <option value="{{ $category->getKey() }}" {{ request('category') == $category->getKey() ? 'selected' : '' }}>
                                 {{ $category->name }}
                             </option>
                         @endforeach

@@ -54,10 +54,14 @@ class LoanReturnTest extends TestCase
 
         $loan->refresh();
         $this->assertSame('returned', $loan->status);
-        $this->assertNotNull($loan->return_date);
+        $this->assertDatabaseHas('returns', [
+            'loan_id' => $loan->getKey(),
+            'return_date' => now()->toDateString(),
+            'processed_by' => $this->admin->getKey(),
+        ]);
         $this->assertSame(3, $book->refresh()->available_stock);
 
-        $this->assertDatabaseMissing('penalties', ['loan_id' => $loan->id]);
+        $this->assertDatabaseMissing('penalties', ['loan_id' => $loan->getKey()]);
     }
 
     public function test_return_late_creates_penalty_with_correct_fine(): void
@@ -75,7 +79,7 @@ class LoanReturnTest extends TestCase
         $this->assertSame('returned', $loan->status);
         $this->assertSame($stockBefore + 1, $book->refresh()->available_stock);
 
-        $penalty = Penalty::where('loan_id', $loan->id)->firstOrFail();
+        $penalty = Penalty::where('loan_id', $loan->getKey())->firstOrFail();
         $this->assertSame(3, $penalty->days_late);
         $this->assertSame(6000, (int) $penalty->fine_amount);
         $this->assertSame('unpaid', $penalty->status);
@@ -108,7 +112,7 @@ class LoanReturnTest extends TestCase
         $response = $this->findLoan($loan);
 
         $response->assertSessionHas('error', 'Buku untuk kode ini sudah dikembalikan');
-        $this->assertSame(0, Penalty::where('loan_id', $loan->id)->count());
+        $this->assertSame(0, Penalty::where('loan_id', $loan->getKey())->count());
     }
 
     public function test_return_does_not_create_penalty_when_exactly_on_due_date(): void
@@ -122,7 +126,7 @@ class LoanReturnTest extends TestCase
         $this->processReturn($loan, now()->toDateString());
 
         $this->assertSame('returned', $loan->refresh()->status);
-        $this->assertDatabaseMissing('penalties', ['loan_id' => $loan->id]);
+        $this->assertDatabaseMissing('penalties', ['loan_id' => $loan->getKey()]);
     }
 
     public function test_returning_a_borrowed_book_decrements_then_reincrements_exactly_once(): void
@@ -172,17 +176,20 @@ class LoanReturnTest extends TestCase
             ->get('/admin/returns/'.$loan->loan_code)
             ->assertOk()
             ->assertViewIs('admin.returns.show')
-            ->assertViewHas('loan', fn ($viewLoan) => $viewLoan->id === $loan->id);
+            ->assertViewHas('loan', fn ($viewLoan) => $viewLoan->getKey() === $loan->getKey());
 
         // 3) Proses pengembalian terlambat.
         $this->processReturn($loan, now()->toDateString());
 
         $loan->refresh();
-        $this->assertSame(now()->toDateString(), $loan->return_date->toDateString());
+        $loanReturn = $loan->loanReturn()->firstOrFail();
+        $this->assertSame(now()->toDateString(), $loanReturn->return_date->toDateString());
+        // Admin yang memproses tercatat di kolom processed_by.
+        $this->assertSame($this->admin->getKey(), $loanReturn->processed_by);
         $this->assertSame('returned', $loan->status);
         $this->assertSame(2, $book->refresh()->available_stock);
 
-        $penalty = Penalty::where('loan_id', $loan->id)->firstOrFail();
+        $penalty = Penalty::where('loan_id', $loan->getKey())->firstOrFail();
         $this->assertSame(5, $penalty->days_late);
         $this->assertSame(10000, (int) $penalty->fine_amount);
         $this->assertSame('unpaid', $penalty->status);
@@ -208,9 +215,9 @@ class LoanReturnTest extends TestCase
         // Tidak ada yang berubah.
         $loan->refresh();
         $this->assertSame('borrowed', $loan->status);
-        $this->assertNull($loan->return_date);
+        $this->assertDatabaseMissing('returns', ['loan_id' => $loan->getKey()]);
         $this->assertSame($stockBefore, $book->refresh()->available_stock);
-        $this->assertDatabaseMissing('penalties', ['loan_id' => $loan->id]);
+        $this->assertDatabaseMissing('penalties', ['loan_id' => $loan->getKey()]);
     }
 
     public function test_return_date_cannot_be_before_borrow_date(): void
@@ -229,7 +236,7 @@ class LoanReturnTest extends TestCase
         // Tidak ada yang berubah.
         $loan->refresh();
         $this->assertSame('borrowed', $loan->status);
-        $this->assertNull($loan->return_date);
-        $this->assertDatabaseMissing('penalties', ['loan_id' => $loan->id]);
+        $this->assertDatabaseMissing('returns', ['loan_id' => $loan->getKey()]);
+        $this->assertDatabaseMissing('penalties', ['loan_id' => $loan->getKey()]);
     }
 }

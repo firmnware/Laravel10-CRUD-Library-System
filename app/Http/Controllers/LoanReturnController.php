@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Loan;
+use App\Models\LoanReturn;
 use App\Models\Penalty;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class LoanReturnController extends Controller
@@ -50,11 +52,11 @@ class LoanReturnController extends Controller
 
     public function show(string $loanCode)
     {
-        $loan = Loan::with(['user', 'book', 'penalty'])
+        $loan = Loan::with(['user', 'book', 'penalty', 'loanReturn'])
             ->where('loan_code', $loanCode)
             ->firstOrFail();
 
-        if ($loan->status === 'returned') {
+        if ($loan->status === 'returned' || $loan->loanReturn) {
             return redirect()->route('admin.returns.index')
                 ->with('error', 'Buku untuk kode ini sudah dikembalikan');
         }
@@ -68,7 +70,9 @@ class LoanReturnController extends Controller
             ->where('loan_code', $loanCode)
             ->firstOrFail();
 
-        if ($loan->status === 'returned') {
+        // Guard dobel: lewat status loans DAN keberadaan baris returns
+        // (kolom loan_id UNIQUE di tabel returns juga menolak dobel di DB).
+        if ($loan->status === 'returned' || $loan->loanReturn()->exists()) {
             return redirect()->route('admin.returns.index')
                 ->with('error', 'Buku untuk kode ini sudah dikembalikan');
         }
@@ -105,10 +109,17 @@ class LoanReturnController extends Controller
                 $fineAmount = $daysLate * config('perpustakaan.fine_per_day');
             }
 
-            // Update peminjaman
+            // Status tetap disimpan di loans (keputusan desain), sedangkan
+            // data pengembalian masuk tabel returns terpisah.
             $loan->update([
-                'return_date' => $returnDate,
                 'status' => 'returned',
+            ]);
+
+            // Data pengembalian tercatat di tabel returns, berikut admin
+            // yang memprosesnya (kolom processed_by).
+            $loan->loanReturn()->create([
+                'processed_by' => Auth::id(),
+                'return_date' => $returnDate,
             ]);
 
             // Kembalikan stok buku
@@ -117,7 +128,7 @@ class LoanReturnController extends Controller
             // HANYA BUAT PENALTY JIKA TERLAMBAT (daysLate > 0)
             if ($daysLate > 0 && $fineAmount > 0) {
                 Penalty::create([
-                    'loan_id' => $loan->id,
+                    'loan_id' => $loan->getKey(),
                     'member_id' => $loan->member_id,
                     'days_late' => $daysLate,
                     'fine_amount' => $fineAmount,

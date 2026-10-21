@@ -21,7 +21,7 @@ class FactoriesTest extends TestCase
     {
         $category = Category::factory()->create();
 
-        $this->assertDatabaseHas('categories', ['id' => $category->id]);
+        $this->assertDatabaseHas('categories', ['categories_id' => $category->getKey()]);
         $this->assertNotEmpty($category->name);
     }
 
@@ -30,7 +30,7 @@ class FactoriesTest extends TestCase
         $book = Book::factory()->create();
 
         $this->assertDatabaseHas('books', [
-            'id' => $book->id,
+            'books_id' => $book->getKey(),
             'isbn' => $book->isbn,
         ]);
         $this->assertNotNull($book->category_id);
@@ -72,12 +72,12 @@ class FactoriesTest extends TestCase
         $loan = Loan::factory()->create();
 
         $this->assertDatabaseHas('loans', [
-            'id' => $loan->id,
+            'loans_id' => $loan->getKey(),
             'status' => 'borrowed',
         ]);
         $this->assertNotNull($loan->user);
         $this->assertNotNull($loan->book);
-        $this->assertNull($loan->return_date);
+        $this->assertNull($loan->loanReturn);
     }
 
     public function test_loan_code_is_unique_per_row(): void
@@ -101,7 +101,7 @@ class FactoriesTest extends TestCase
         $loan = Loan::factory()->returned()->create();
 
         $this->assertSame('returned', $loan->status);
-        $this->assertNotNull($loan->return_date);
+        $this->assertNotNull($loan->loanReturn?->return_date);
         $this->assertFalse($loan->has_fine);
         $this->assertSame(0, $loan->current_fine);
     }

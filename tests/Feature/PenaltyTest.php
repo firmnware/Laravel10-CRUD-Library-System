@@ -26,7 +26,7 @@ class PenaltyTest extends TestCase
 
         // Pin nilainya supaya perhitungan total bisa diprediksi (3 × 2000 = 6000).
         return Penalty::factory()->create([
-            'loan_id' => $loan->id,
+            'loan_id' => $loan->getKey(),
             'member_id' => $loan->member_id,
             'days_late' => 3,
             'fine_amount' => 6000,
@@ -38,7 +38,7 @@ class PenaltyTest extends TestCase
         $penalty = $this->unpaidPenalty();
 
         $response = $this->actingAs($this->admin)
-            ->put('/admin/penalties/'.$penalty->id.'/pay');
+            ->put('/admin/penalties/'.$penalty->getKey().'/pay');
 
         $response->assertRedirect('/admin/penalties');
 
@@ -52,7 +52,7 @@ class PenaltyTest extends TestCase
         $penalty = Penalty::factory()->paid()->create();
 
         $response = $this->actingAs($this->admin)
-            ->put('/admin/penalties/'.$penalty->id.'/pay');
+            ->put('/admin/penalties/'.$penalty->getKey().'/pay');
 
         $response->assertSessionHas('error');
         $this->assertSame('paid', $penalty->refresh()->status);
@@ -63,7 +63,7 @@ class PenaltyTest extends TestCase
         $penalty = $this->unpaidPenalty();
 
         $this->actingAs($this->admin)
-            ->get('/admin/penalties/'.$penalty->id.'/pay')
+            ->get('/admin/penalties/'.$penalty->getKey().'/pay')
             ->assertOk()
             ->assertViewIs('admin.penalties.pay');
     }
@@ -73,7 +73,7 @@ class PenaltyTest extends TestCase
         $penalty = Penalty::factory()->paid()->create();
 
         $this->actingAs($this->admin)
-            ->get('/admin/penalties/'.$penalty->id.'/pay')
+            ->get('/admin/penalties/'.$penalty->getKey().'/pay')
             ->assertRedirect('/admin/penalties');
     }
 
@@ -99,7 +99,7 @@ class PenaltyTest extends TestCase
 
         $myLate = Loan::factory()->for($memberUser)->returnedLate(2)->create();
         $mine = Penalty::factory()->create([
-            'loan_id' => $myLate->id,
+            'loan_id' => $myLate->getKey(),
             'member_id' => $myLate->member_id,
         ]);
         $other = $this->unpaidPenalty();
@@ -107,9 +107,9 @@ class PenaltyTest extends TestCase
         $response = $this->actingAs($memberUser)->get('/member/my-penalties');
 
         $response->assertOk()->assertViewHas('penalties', function ($penalties) use ($mine, $other) {
-            $ids = $penalties->pluck('id');
+            $ids = $penalties->pluck('penalties_id');
 
-            return $ids->contains($mine->id) && ! $ids->contains($other->id);
+            return $ids->contains($mine->getKey()) && ! $ids->contains($other->getKey());
         });
     }
 
@@ -117,7 +117,7 @@ class PenaltyTest extends TestCase
     {
         $loan = Loan::factory()->returnedLate(3)->create();
         Penalty::factory()->create([
-            'loan_id' => $loan->id,
+            'loan_id' => $loan->getKey(),
             'member_id' => $loan->member_id,
             'days_late' => 3,
             'fine_amount' => 6000,

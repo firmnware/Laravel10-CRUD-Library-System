@@ -17,13 +17,14 @@ class LoanFactory extends Factory
         // Format sama dengan production: PJM-<Ymd>-<6 karakter acak>
         $code = 'PJM-'.now()->format('Ymd').'-'.strtoupper(fake()->regexify('[A-Z0-9]{6}'));
 
+        // Data pengembalian tidak lagi di loans — dibuat di tabel returns
+        // oleh state returned()/returnedLate() lewat afterCreating().
         return [
             'loan_code' => $code,
             'member_id' => User::factory(),
             'book_id' => Book::factory(),
             'borrow_date' => now()->subDays(2),
             'due_date' => now()->addDays(5),
-            'return_date' => null,
             'status' => 'borrowed',
         ];
     }
@@ -31,10 +32,14 @@ class LoanFactory extends Factory
     /** Sudah dikembalikan tepat waktu (tanpa denda). */
     public function returned(): static
     {
-        return $this->state(fn () => [
-            'status' => 'returned',
-            'return_date' => now()->subDay(),
-        ]);
+        return $this->state(fn () => ['status' => 'returned'])
+            ->afterCreating(function (Loan $loan) {
+                $loan->loanReturn()->create([
+                    // processed_by boleh null di factory — hanya alur controller
+                    // (LoanReturnController::process) yang mengisi admin.
+                    'return_date' => now()->subDay(),
+                ]);
+            });
     }
 
     /** Masih dipinjam tapi sudah lewat jatuh tempo (denda real-time jalan). */
@@ -43,7 +48,6 @@ class LoanFactory extends Factory
         return $this->state(fn () => [
             'status' => 'borrowed',
             'due_date' => now()->subDays(3),
-            'return_date' => null,
         ]);
     }
 
@@ -55,7 +59,12 @@ class LoanFactory extends Factory
         return $this->state(fn () => [
             'status' => 'returned',
             'due_date' => $due,
-            'return_date' => $due->copy()->addDays($days),
-        ]);
+        ])->afterCreating(function (Loan $loan) use ($days, $due) {
+            $loan->loanReturn()->create([
+                // processed_by boleh null di factory — hanya alur controller
+                // (LoanReturnController::process) yang mengisi admin.
+                'return_date' => $due->copy()->addDays($days),
+            ]);
+        });
     }
 }

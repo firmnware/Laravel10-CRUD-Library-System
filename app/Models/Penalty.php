@@ -9,6 +9,8 @@ class Penalty extends Model
 {
     use HasFactory;
 
+    protected $primaryKey = 'penalties_id';
+
     protected $fillable = [
         'loan_id', 'member_id', 'days_late', 'fine_amount', 'status', 'paid_date'
     ];
@@ -17,7 +19,7 @@ class Penalty extends Model
 
     public function loan()
     {
-        return $this->belongsTo(Loan::class);
+        return $this->belongsTo(Loan::class, 'loan_id', 'loans_id');
     }
 
     public function user()

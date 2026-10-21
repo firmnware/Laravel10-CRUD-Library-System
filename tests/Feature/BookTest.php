@@ -54,15 +54,15 @@ class BookTest extends TestCase
         $categoryA = Category::factory()->create();
         $categoryB = Category::factory()->create();
 
-        Book::factory()->count(2)->create(['category_id' => $categoryA->id]);
-        Book::factory()->create(['category_id' => $categoryB->id]);
+        Book::factory()->count(2)->create(['category_id' => $categoryA->getKey()]);
+        Book::factory()->create(['category_id' => $categoryB->getKey()]);
 
         $response = $this->actingAs($this->admin)
-            ->get('/admin/books?category='.$categoryA->id);
+            ->get('/admin/books?category='.$categoryA->getKey());
 
         $response->assertOk()->assertViewHas('books', function ($books) use ($categoryA) {
             return $books->count() === 2
-                && $books->every(fn ($b) => $b->category_id === $categoryA->id);
+                && $books->every(fn ($b) => $b->category_id === $categoryA->getKey());
         });
     }
 
@@ -88,7 +88,7 @@ class BookTest extends TestCase
             'title' => 'Buku Baru',
             'isbn' => '978-602-1234-999',
             'stock' => 5,
-            'category_id' => $category->id,
+            'category_id' => $category->getKey(),
             'author' => 'Penulis',
             'publisher' => 'Penerbit',
             'year' => 2024,
@@ -169,7 +169,7 @@ class BookTest extends TestCase
         $book = Book::factory()->create(['stock' => 5, 'available_stock' => 3]);
 
         $response = $this->actingAs($this->admin)
-            ->put('/admin/books/'.$book->id, [
+            ->put('/admin/books/'.$book->getKey(), [
                 'title' => 'Judul Diubah',
                 'isbn' => $book->isbn,
                 'stock' => 8,
@@ -192,11 +192,11 @@ class BookTest extends TestCase
         // Rumus baru: max(0, stock - pinjaman_aktif) = max(0, 1 - 5) = 0.
         $book = Book::factory()->create(['stock' => 5, 'available_stock' => 0]);
         \App\Models\Loan::factory()->count(5)->create([
-            'book_id' => $book->id,
+            'book_id' => $book->getKey(),
             'status' => 'borrowed',
         ]);
 
-        $response = $this->actingAs($this->admin)->put('/admin/books/'.$book->id, [
+        $response = $this->actingAs($this->admin)->put('/admin/books/'.$book->getKey(), [
             'title' => $book->title,
             'isbn' => $book->isbn,
             'stock' => 1,
@@ -218,7 +218,7 @@ class BookTest extends TestCase
             'status' => 'borrowed',
         ]);
 
-        $this->actingAs($this->admin)->put('/admin/books/'.$book->id, [
+        $this->actingAs($this->admin)->put('/admin/books/'.$book->getKey(), [
             'title' => $book->title,
             'isbn' => $book->isbn,
             'stock' => 5,
@@ -235,13 +235,13 @@ class BookTest extends TestCase
         $book = Book::factory()->create();
 
         $this->actingAs($this->admin)
-            ->get('/admin/books/'.$book->id)
+            ->get('/admin/books/'.$book->getKey())
             ->assertOk()
             ->assertViewIs('admin.books.show');
 
         $member = User::factory()->create(['role' => 'member']);
         $this->actingAs($member)
-            ->get('/member/books/'.$book->id)
+            ->get('/member/books/'.$book->getKey())
             ->assertOk()
             ->assertViewIs('member.books.show');
     }
@@ -252,10 +252,10 @@ class BookTest extends TestCase
     {
         $book = Book::factory()->create();
 
-        $response = $this->actingAs($this->admin)->delete('/admin/books/'.$book->id);
+        $response = $this->actingAs($this->admin)->delete('/admin/books/'.$book->getKey());
 
         $response->assertRedirect('/admin/books');
-        $this->assertDatabaseMissing('books', ['id' => $book->id]);
+        $this->assertDatabaseMissing('books', ['books_id' => $book->getKey()]);
     }
 
     public function test_book_with_active_borrow_cannot_be_deleted(): void
@@ -264,15 +264,15 @@ class BookTest extends TestCase
         // tanpa guard ini, menghapus buku ikut menghapus peminjaman & penalty.
         $book = Book::factory()->create();
         $loan = \App\Models\Loan::factory()->create([
-            'book_id' => $book->id,
+            'book_id' => $book->getKey(),
             'status' => 'borrowed',
         ]);
 
-        $response = $this->actingAs($this->admin)->delete('/admin/books/'.$book->id);
+        $response = $this->actingAs($this->admin)->delete('/admin/books/'.$book->getKey());
 
         $response->assertSessionHas('error');
-        $this->assertDatabaseHas('books', ['id' => $book->id]);
-        $this->assertDatabaseHas('loans', ['id' => $loan->id]);
+        $this->assertDatabaseHas('books', ['books_id' => $book->getKey()]);
+        $this->assertDatabaseHas('loans', ['loans_id' => $loan->getKey()]);
     }
 
     public function test_book_with_returned_history_cannot_be_deleted(): void
@@ -281,18 +281,18 @@ class BookTest extends TestCase
         // kaskade FK akan menghapus baris transaksi beserta penaltinya.
         $book = Book::factory()->create();
         $loan = \App\Models\Loan::factory()->returned()->create([
-            'book_id' => $book->id,
+            'book_id' => $book->getKey(),
         ]);
         $penalty = \App\Models\Penalty::factory()->create([
-            'loan_id' => $loan->id,
+            'loan_id' => $loan->getKey(),
             'member_id' => $loan->member_id,
         ]);
 
-        $response = $this->actingAs($this->admin)->delete('/admin/books/'.$book->id);
+        $response = $this->actingAs($this->admin)->delete('/admin/books/'.$book->getKey());
 
         $response->assertSessionHas('error');
-        $this->assertDatabaseHas('books', ['id' => $book->id]);
-        $this->assertDatabaseHas('loans', ['id' => $loan->id]);
-        $this->assertDatabaseHas('penalties', ['id' => $penalty->id]);
+        $this->assertDatabaseHas('books', ['books_id' => $book->getKey()]);
+        $this->assertDatabaseHas('loans', ['loans_id' => $loan->getKey()]);
+        $this->assertDatabaseHas('penalties', ['penalties_id' => $penalty->getKey()]);
     }
 }

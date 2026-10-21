@@ -163,9 +163,9 @@
                             <td>
                                 @if($isReturned)
                                     <span class="badge bg-success">Dikembalikan</span>
-                                    @if($loan->return_date)
+                                    @if($loan->loanReturn?->return_date)
                                         <div class="small text-muted mt-1">
-                                            {{ $loan->return_date->format('d/m/Y') }}
+                                            {{ $loan->loanReturn->return_date->format('d/m/Y') }}
                                         </div>
                                     @endif
                                 @else
