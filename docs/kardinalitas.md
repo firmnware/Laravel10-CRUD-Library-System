@@ -11,15 +11,15 @@ Notasi kardinalitas: **1:1**, **1:M**, **M:M**.
 
 ## Ringkasan Relasi
 
-| No | Relasi | Kardinalitas | Alasan Singkat |
-|----|--------|:------------:|----------------|
-| 1 | `categories` → `books` | **1:M** | Satu kategori memuat banyak buku |
-| 2 | `users` → `loans` | **1:M** | Satu user bisa meminjam banyak buku |
-| 3 | `books` → `loans` | **1:M** | Satu judul buku bisa dipinjam berkali-kali |
-| 4 | `loans` → `returns` | **1:1** | Satu peminjaman hanya dikembalikan sekali |
-| 5 | `returns` → `penalties` | **1:1** | Denda lahir dari SATU kejadian pengembalian telat |
-| 6 | `users` → `penalties` | **1:M** | Satu user bisa terkena banyak denda |
-| 7 | `users` ↔ `books` | **M:M** | Diurai via junction table `loans` |
+| No | Relasi | Kardinalitas | FK yang Menghubungkan | Alasan Singkat |
+|----|--------|:------------:|----------------------|----------------|
+| 1 | `categories` → `books` | **1:M** | `books.category_id` | Satu kategori memuat banyak buku |
+| 2 | `users` → `loans` | **1:M** | `loans.member_id` | Satu user bisa meminjam banyak buku |
+| 3 | `books` → `loans` | **1:M** | `loans.book_id` | Satu judul buku bisa dipinjam berkali-kali |
+| 4 | `loans` → `returns` | **1:1** | `returns.loan_id` (UNIQUE) | Satu peminjaman hanya dikembalikan sekali |
+| 5 | `returns` → `penalties` | **1:1** | `penalties.return_id` (UNIQUE) | Denda lahir dari SATU kejadian pengembalian telat |
+| 6 | `users` → `penalties` | **1:M** | `penalties.member_id` | Satu user bisa terkena banyak denda |
+| 7 | `users` ↔ `books` | **M:M** | diurai via junction `loans` | Banyak user meminjam banyak buku |
 
 > **Catatan peran:** `users` adalah satu tabel gabungan (admin + member,
 > dibedakan kolom `role`) — TIDAK dipisah. Kolom audit `processed_by`
