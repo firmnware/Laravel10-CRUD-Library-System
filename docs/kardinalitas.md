@@ -29,6 +29,27 @@ Notasi kardinalitas: **1:1**, **1:M**, **M:M**.
 
 ---
 
+## PK & FK Tiap Tabel
+
+| Tabel | PK (Primary Key) | FK (Foreign Key) |
+|-------|------------------|------------------|
+| `users` | `id` | — (tabel acuan) |
+| `categories` | `categories_id` | — |
+| `books` | `books_id` | `category_id` → `categories.categories_id` |
+| `loans` | `loans_id` | `member_id` → `users.id` · `book_id` → `books.books_id` · `processed_by` → `users.id` (nullable) |
+| `returns` | `returns_id` | `loan_id` **(UNIQUE)** → `loans.loans_id` · `processed_by` → `users.id` (nullable) |
+| `penalties` | `penalties_id` | `return_id` **(UNIQUE)** → `returns.returns_id` · `member_id` → `users.id` |
+
+> Aturan integritas FK yang dipakai:
+> - `CASCADE`: hapus induk ikut menghapus anak (`member_id`, `book_id`,
+>   `loan_id` di `returns`, `return_id`, `member_id` di `penalties`).
+> - `SET NULL`: hapus kategori → buku tetap ada tanpa kategori
+>   (`books.category_id`).
+> - `NULL ON DELETE`: hapus admin → jejak audit tetap, namanya jadi kosong
+>   (`processed_by` di `loans` & `returns`).
+
+---
+
 ## Pembahasan Tiap Relasi
 
 ### 1. `categories` **1:M** `books`
@@ -98,3 +119,9 @@ Notasi kardinalitas: **1:1**, **1:M**, **M:M**.
 > (relasi `User` 1:1 `Member` tidak ada lagi), dan `returns` adalah tabel
 > baru hasil pemisahan dari `loans`. Tabel dulu bernama `transactions`
 > kini bernama `loans`.
+
+> Catatan implementasi: dokumen ini mencatat desain terkini yang
+> disepakati (denda berbasis tabel `returns`, FK `penalties.return_id`).
+> Implementasi kode/DB saat ini masih memakai FK lama
+> (`penalties.loan_id` → `loans.loans_id`) dan baru akan di-align
+> di tahap berikutnya.
