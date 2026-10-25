@@ -31,22 +31,48 @@ Notasi kardinalitas: **1:1**, **1:M**, **M:M**.
 
 ## PK & FK Tiap Tabel
 
-| Tabel | PK (Primary Key) | FK (Foreign Key) |
-|-------|------------------|------------------|
-| `users` | `id` | — (tabel acuan) |
-| `categories` | `categories_id` | — |
-| `books` | `books_id` | `category_id` → `categories.categories_id` |
-| `loans` | `loans_id` | `member_id` → `users.id` · `book_id` → `books.books_id` · `processed_by` → `users.id` (nullable) |
-| `returns` | `returns_id` | `loan_id` **(UNIQUE)** → `loans.loans_id` · `processed_by` → `users.id` (nullable) |
-| `penalties` | `penalties_id` | `return_id` **(UNIQUE)** → `returns.returns_id` · `member_id` → `users.id` |
+**PK (Primary Key)** = identitas unik baris di tabel itu sendiri.
+**FK (Foreign Key)** = kolom "tunjuk" yang berisi PK dari tabel lain
+(menghubungkan dua tabel).
 
-> Aturan integritas FK yang dipakai:
-> - `CASCADE`: hapus induk ikut menghapus anak (`member_id`, `book_id`,
->   `loan_id` di `returns`, `return_id`, `member_id` di `penalties`).
-> - `SET NULL`: hapus kategori → buku tetap ada tanpa kategori
->   (`books.category_id`).
-> - `NULL ON DELETE`: hapus admin → jejak audit tetap, namanya jadi kosong
->   (`processed_by` di `loans` & `returns`).
+| No | Tabel | Kolom | Peran | Menunjuk ke | Keterangan |
+|----|-------|-------|:-----:|-------------|------------|
+| 1 | `users` | `id` | **PK** | — | Identitas user (tabel acuan, tidak punya FK) |
+| 2 | `categories` | `categories_id` | **PK** | — | Identitas kategori (tidak punya FK) |
+| 3 | `books` | `books_id` | **PK** | — | Identitas buku |
+| 4 | `books` | `category_id` | **FK** | `categories.categories_id` | Buku ini milik kategori mana (boleh kosong / NULL) |
+| 5 | `loans` | `loans_id` | **PK** | — | Identitas peminjaman |
+| 6 | `loans` | `member_id` | **FK** | `users.id` | Peminjaman ini milik user (member) siapa |
+| 7 | `loans` | `book_id` | **FK** | `books.books_id` | Peminjaman ini meminjam buku yang mana |
+| 8 | `loans` | `processed_by` | **FK** | `users.id` | Admin yang meminjamkan (boleh kosong / NULL) |
+| 9 | `returns` | `returns_id` | **PK** | — | Identitas pengembalian |
+| 10 | `returns` | `loan_id` | **FK UNIQUE** | `loans.loans_id` | Pengembalian ini untuk peminjaman yang mana (UNIQUE = satu peminjaman hanya dikembalikan sekali) |
+| 11 | `returns` | `processed_by` | **FK** | `users.id` | Admin yang menerima pengembalian (boleh kosong / NULL) |
+| 12 | `penalties` | `penalties_id` | **PK** | — | Identitas denda |
+| 13 | `penalties` | `return_id` | **FK UNIQUE** | `returns.returns_id` | Denda ini lahir dari kejadian pengembalian (telat) yang mana |
+| 14 | `penalties` | `member_id` | **FK** | `users.id` | Denda ini milik user (member) siapa |
+
+Membaca tabel di atas:
+
+- Baris berperan **PK** = "kartu identitas" tabel itu, mis. `loans_id`
+  membedakan satu peminjaman dari peminjaman lain.
+- Baris berperan **FK** = "tali penghubung", mis. `loans.book_id`
+  mengaitkan baris peminjaman ke satu baris di tabel `books`.
+- Kata **UNIQUE** pada FK (`loan_id` di `returns`, `return_id` di
+  `penalties`) berarti nilainya tidak boleh kembar inilah yang
+  memaksa kardinalitas 1:1.
+- FK bertanda *(boleh kosong / NULL)* = opsional: baris boleh ada tanpa
+  nilai itu (peminjaman belum punya admin pemroses, dst.).
+
+---
+
+### Aturan Integritas FK
+
+| Aturan | Artinya | Dipakai di |
+|--------|---------|------------|
+| `CASCADE` | Induk dihapus → baris anak ikut terhapus | `member_id` & `book_id` di `loans`, `loan_id` di `returns`, `return_id` & `member_id` di `penalties` |
+| `SET NULL` | Induk dihapus → kolom FK anak jadi NULL (anak tetap hidup) | `books.category_id` |
+| `NULL ON DELETE` | Induk (admin) dihapus → jejak audit tetap, namanya jadi kosong | `processed_by` di `loans` & `returns` |
 
 ---
 
