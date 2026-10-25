@@ -99,6 +99,7 @@
                             <th>Jatuh Tempo</th>
                             <th>Sisa Hari</th>
                             <th>Status</th>
+                            <th>Diproses oleh</th>
                             <th>Denda</th>
                             <th>Aksi</th>
                         </tr>
@@ -116,7 +117,14 @@
                         @endphp
                         <tr>
                             <td>
-                                <span class="badge bg-secondary">{{ $loan->loan_code }}</span>
+                                <div class="d-inline-flex align-items-center gap-1 copy-code-wrap">
+                                    <span class="badge bg-secondary loan-code">{{ $loan->loan_code }}</span>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm btn-copy-code p-1"
+                                            data-code="{{ $loan->loan_code }}"
+                                            title="Copy kode (paste ke halaman Pengembalian)">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
                             </td>
                             <td>{{ $loan->user->name ?? '-' }}</td>
                             <td>{{ $loan->book->title ?? '-' }}</td>
@@ -168,6 +176,13 @@
                                             {{ $loan->loanReturn->return_date->format('d/m/Y') }}
                                         </div>
                                     @endif
+                                    @if($loan->loanReturn?->admin)
+                                        {{-- Admin yang MENERIMA pengembalian —
+                                             boleh beda orang dengan yang meminjamkan. --}}
+                                        <div class="small text-muted">
+                                            Dikembalikan oleh: {{ $loan->loanReturn->admin->name }}
+                                        </div>
+                                    @endif
                                 @else
                                     <span class="badge bg-{{ $loan->status_color }}">
                                         {{ $loan->status_text }}
@@ -178,6 +193,10 @@
                                         </div>
                                     @endif
                                 @endif
+                            </td>
+                            <td class="small">
+                                {{-- Admin yang meminjamkan (membuat) peminjaman --}}
+                                {{ $loan->processedBy?->name ?? '-' }}
                             </td>
                             <td>
                                 {{--  TAMPILKAN STATUS DENDA --}}
@@ -260,3 +279,81 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<style>
+    .btn-copy-code i { pointer-events: none; }
+</style>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var FALLBACK_MS = 1500;
+
+        function writeClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                return navigator.clipboard.writeText(text);
+            }
+
+            // Fallback untuk lingkungan non-HTTPS tanpa clipboard API.
+            return new Promise(function (resolve, reject) {
+                var ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                try {
+                    var ok = document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    ok ? resolve() : reject(new Error('copy failed'));
+                } catch (e) {
+                    document.body.removeChild(ta);
+                    reject(e);
+                }
+            });
+        }
+
+        document.addEventListener('click', function (event) {
+            var btn = event.target.closest('.btn-copy-code');
+            if (!btn) return;
+
+            var code = btn.dataset.code;
+            var icon = btn.querySelector('i');
+            var oldTitle = btn.getAttribute('title');
+
+            function flashSuccess() {
+                if (icon) {
+                    icon.classList.remove('fa-copy');
+                    icon.classList.add('fa-check', 'text-success');
+                    setTimeout(function () {
+                        icon.classList.remove('fa-check', 'text-success');
+                        icon.classList.add('fa-copy');
+                    }, FALLBACK_MS);
+                }
+                btn.setAttribute('title', 'Kode ' + code + ' tercopy!');
+                setTimeout(function () {
+                    btn.setAttribute('title', oldTitle);
+                }, FALLBACK_MS);
+            }
+
+            function flashError() {
+                btn.setAttribute('title', 'Gagal copy kode');
+                setTimeout(function () {
+                    btn.setAttribute('title', oldTitle);
+                }, FALLBACK_MS);
+            }
+
+            writeClipboard(code).then(flashSuccess).catch(function () {
+                if (icon) {
+                    icon.classList.remove('fa-copy');
+                    icon.classList.add('fa-exclamation-triangle', 'text-danger');
+                    setTimeout(function () {
+                        icon.classList.remove('fa-exclamation-triangle', 'text-danger');
+                        icon.classList.add('fa-copy');
+                    }, FALLBACK_MS);
+                }
+                flashError();
+            });
+        });
+    });
+</script>
+@endpush

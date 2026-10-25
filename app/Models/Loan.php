@@ -16,6 +16,7 @@ class Loan extends Model
 
     protected $fillable = [
         'loan_code', 'member_id', 'book_id', 'borrow_date', 'due_date', 'status',
+        'processed_by',
     ];
 
     protected $casts = [
@@ -41,6 +42,14 @@ class Loan extends Model
     public function loanReturn()
     {
         return $this->hasOne(LoanReturn::class, 'loan_id', 'loans_id');
+    }
+
+    // Admin yang memproses (membuat) peminjaman ini. Boleh jadi admin BERBEDA
+    // dengan yang memproses pengembalian (returns.processed_by) — dua jejak
+    // terpisah, dua orang berbeda adalah kasus normal (beda shift/staf).
+    public function processedBy()
+    {
+        return $this->belongsTo(User::class, 'processed_by');
     }
 
     /**

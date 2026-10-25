@@ -45,6 +45,8 @@ class LoanBorrowTest extends TestCase
             'member_id' => $member->id,
             'book_id' => $book->getKey(),
             'status' => 'borrowed',
+            // Jejak: admin yang login dicatat sebagai pemroses peminjaman.
+            'processed_by' => $this->admin->getKey(),
         ]);
         $this->assertSame(3, $book->refresh()->available_stock);
         $this->assertSame(4, $book->stock);

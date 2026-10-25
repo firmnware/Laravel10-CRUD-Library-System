@@ -116,7 +116,9 @@ class DatabaseSeeder extends Seeder
         $categoryIds = [];
         foreach ($categoryData as $cat) {
             $category = Category::create($cat);
-            $categoryIds[] = $category->id;
+            // PK Category = categories_id (bukan 'id'), jadi pakai getKey()
+            // agar tidak menyimpan NULL ke books.category_id.
+            $categoryIds[] = $category->getKey();
         }
 
         // ========== FUNGSI UNTUK CEK GAMBAR ==========

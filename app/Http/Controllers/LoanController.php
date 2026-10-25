@@ -14,7 +14,9 @@ class LoanController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Loan::with(['user', 'book', 'penalty']);
+        // loanReturn.admin = admin yang memproses pengembalian (nested),
+        // processedBy = admin yang meminjamkan (membuat) peminjaman ini.
+        $query = Loan::with(['user', 'book', 'penalty', 'processedBy', 'loanReturn.admin']);
 
         // Filter berdasarkan status (overdue = virtual: borrowed + lewat jatuh tempo)
         if ($request->filled('status')) {
@@ -123,6 +125,8 @@ class LoanController extends Controller
             }
 
             // C1: kode peminjaman dihasilkan lewat generator tunggal.
+            // processed_by = admin yang sedang login (jejak siapa yang
+            // meminjamkan — berbeda dengan returns.processed_by pengembalian).
             $loan = Loan::create([
                 'loan_code' => Loan::generateCode(),
                 'member_id' => $request->member_id,
@@ -130,6 +134,7 @@ class LoanController extends Controller
                 'borrow_date' => $request->borrow_date,
                 'due_date' => $request->due_date,
                 'status' => 'borrowed',
+                'processed_by' => auth()->id(),
             ]);
 
             $book->decreaseStock();

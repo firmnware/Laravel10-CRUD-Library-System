@@ -196,6 +196,41 @@ class LoanReturnTest extends TestCase
         $this->assertSame($loan->member_id, $penalty->member_id);
     }
 
+    public function test_loans_index_shows_loan_and_return_processor_names(): void
+    {
+        // Skenario user: admin 1 meminjamkan, admin 2 mengembalikan.
+        // Dua jejak terpisah (loans.processed_by vs returns.processed_by)
+        // dan KEDUANYA tampil di daftar peminjaman.
+        $admin1 = $this->admin;
+        $admin2 = User::factory()->admin()->create();
+        $member = User::factory()->create();
+        $book = Book::factory()->create(['stock' => 1, 'available_stock' => 1]);
+
+        // Admin 1 meminjamkan.
+        $this->actingAs($admin1)->post('/admin/loans', [
+            'member_id' => $member->id,
+            'book_id' => $book->getKey(),
+            'borrow_date' => now()->toDateString(),
+            'due_date' => now()->addDays(7)->toDateString(),
+        ])->assertRedirect('/admin/loans');
+
+        $loan = Loan::latest('loans_id')->firstOrFail();
+
+        // Admin 2 memproses pengembalian.
+        $this->actingAs($admin2)
+            ->post('/admin/returns/'.$loan->loan_code, [
+                'return_date' => now()->toDateString(),
+            ])
+            ->assertRedirect('/admin/returns');
+
+        $this->actingAs($admin1)->get('/admin/loans')
+            ->assertOk()
+            ->assertSee('Diproses oleh', false)
+            ->assertSee($admin1->name)          // pemroses peminjaman
+            ->assertSee('Dikembalikan oleh:', false)
+            ->assertSee($admin2->name);         // pemroses pengembalian (beda orang)
+    }
+
     // ---------- VALIDASI TANGGAL PENGEMBALIAN ----------
 
     public function test_return_date_cannot_be_in_the_future(): void
