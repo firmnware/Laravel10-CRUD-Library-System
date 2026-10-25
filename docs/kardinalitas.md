@@ -17,7 +17,7 @@ Notasi kardinalitas: **1:1**, **1:M**, **M:M**.
 | 2 | `users` → `loans` | **1:M** | `loans.member_id` | Satu user bisa meminjam banyak buku |
 | 3 | `books` → `loans` | **1:M** | `loans.book_id` | Satu judul buku bisa dipinjam berkali-kali |
 | 4 | `loans` → `returns` | **1:1** | `returns.loan_id` (UNIQUE) | Satu peminjaman hanya dikembalikan sekali |
-| 5 | `returns` → `penalties` | **1:1** | `penalties.return_id` (UNIQUE) | Denda lahir dari SATU kejadian pengembalian telat |
+| 5 | `loans` → `penalties` | **1:1** | `penalties.loan_id` | Denda lahir dari peminjaman yang telat (diketahui saat pengembalian) |
 | 6 | `users` → `penalties` | **1:M** | `penalties.member_id` | Satu user bisa terkena banyak denda |
 | 7 | `users` ↔ `books` | **M:M** | diurai via junction `loans` | Banyak user meminjam banyak buku |
 
@@ -49,7 +49,7 @@ Notasi kardinalitas: **1:1**, **1:M**, **M:M**.
 | 10 | `returns` | `loan_id` | **FK UNIQUE** | `loans.loans_id` | Pengembalian ini untuk peminjaman yang mana (UNIQUE = satu peminjaman hanya dikembalikan sekali) |
 | 11 | `returns` | `processed_by` | **FK** | `users.id` | Admin yang menerima pengembalian (boleh kosong / NULL) |
 | 12 | `penalties` | `penalties_id` | **PK** | — | Identitas denda |
-| 13 | `penalties` | `return_id` | **FK UNIQUE** | `returns.returns_id` | Denda ini lahir dari kejadian pengembalian (telat) yang mana |
+| 13 | `penalties` | `loan_id` | **FK** | `loans.loans_id` | Denda ini lahir dari peminjaman yang mana (telat diketahui dari pengembaliannya) |
 | 14 | `penalties` | `member_id` | **FK** | `users.id` | Denda ini milik user (member) siapa |
 
 Membaca tabel di atas:
@@ -58,9 +58,8 @@ Membaca tabel di atas:
   membedakan satu peminjaman dari peminjaman lain.
 - Baris berperan **FK** = "tali penghubung", mis. `loans.book_id`
   mengaitkan baris peminjaman ke satu baris di tabel `books`.
-- Kata **UNIQUE** pada FK (`loan_id` di `returns`, `return_id` di
-  `penalties`) berarti nilainya tidak boleh kembar inilah yang
-  memaksa kardinalitas 1:1.
+- Kata **UNIQUE** pada FK (`loan_id` di `returns`) berarti nilainya
+  tidak boleh kembar — inilah yang memaksa kardinalitas 1:1.
 - FK bertanda *(boleh kosong / NULL)* = opsional: baris boleh ada tanpa
   nilai itu (peminjaman belum punya admin pemroses, dst.).
 
@@ -70,7 +69,7 @@ Membaca tabel di atas:
 
 | Aturan | Artinya | Dipakai di |
 |--------|---------|------------|
-| `CASCADE` | Induk dihapus → baris anak ikut terhapus | `member_id` & `book_id` di `loans`, `loan_id` di `returns`, `return_id` & `member_id` di `penalties` |
+| `CASCADE` | Induk dihapus → baris anak ikut terhapus | `member_id` & `book_id` di `loans`, `loan_id` di `returns`, `loan_id` & `member_id` di `penalties` |
 | `SET NULL` | Induk dihapus → kolom FK anak jadi NULL (anak tetap hidup) | `books.category_id` |
 | `NULL ON DELETE` | Induk (admin) dihapus → jejak audit tetap, namanya jadi kosong | `processed_by` di `loans` & `returns` |
 
@@ -104,17 +103,19 @@ Membaca tabel di atas:
 - Bentuk penuhnya **1 : 0..1** — selama buku masih dipinjam, baris
   `returns`-nya belum ada.
 
-### 5. `returns` **1:1** `penalties`
+### 5. `loans` **1:1** `penalties`
 
-- Denda SELALU berasal dari keterlambatan, dan keterlambatan baru
-  diketahui saat pengembalian terjadi — sumber relasinya tabel
-  `returns`, bukan `loans`.
-- FK: `penalties.return_id` → `returns.returns_id` (kolom FK UNIQUE).
-- Satu pengembalian telat menghasilkan paling banyak satu denda;
-  pengembalian tepat waktu tidak menghasilkan denda sama sekali
+- Denda SELALU berasal dari keterlambatan, dan keterlambatan baru diketahui
+  saat pengembalian terjadi — tetapi baris denda ditautkan ke
+  **peminjamannya** (FK `penalties.loan_id` → `loans.loans_id`, sesuai
+  skema di phpMyAdmin).
+- Satu peminjaman menghasilkan paling banyak satu denda (dijamin logika
+  aplikasi: denda hanya dibuat sekali saat proses pengembalian);
+  peminjaman tepat waktu tidak membuat denda sama sekali
   (bentuk penuh **1 : 0..1**).
-- `days_late` dan `fine_amount` diturunkan (derived) dari
-  `returns.return_date` versus `loans.due_date` (via `returns.loan_id`).
+- `days_late` dan `fine_amount` (decimal) diturunkan (derived) dari
+  `returns.return_date` versus `loans.due_date` — dilihat lewat
+  `returns.loan_id`.
 - FK `penalties.member_id` → `users.id` tetap disimpan per kejadian,
   supaya daftar "denda milik siapa" tidak perlu join berlapis.
 
@@ -137,7 +138,7 @@ Membaca tabel di atas:
 
 | Kode | Makna | Contoh di skema ini |
 |------|-------|---------------------|
-| 1:1 | Satu ke satu | `loans`–`returns` (UNIQUE `loan_id`), `returns`–`penalties` (UNIQUE `return_id`) |
+| 1:1 | Satu ke satu | `loans`–`returns` (UNIQUE `loan_id`), `loans`–`penalties` (`loan_id`) |
 | 1:M | Satu ke banyak | Relasi 1–3, 6 |
 | M:M | Banyak ke banyak | `users`–`books`, diurai via junction `loans` |
 
@@ -146,8 +147,10 @@ Membaca tabel di atas:
 > baru hasil pemisahan dari `loans`. Tabel dulu bernama `transactions`
 > kini bernama `loans`.
 
-> Catatan implementasi: dokumen ini mencatat desain terkini yang
-> disepakati (denda berbasis tabel `returns`, FK `penalties.return_id`).
-> Implementasi kode/DB saat ini masih memakai FK lama
-> (`penalties.loan_id` → `loans.loans_id`) dan baru akan di-align
-> di tahap berikutnya.
+> Catatan pembacaan: baris denda ditautkan ke `loans` (FK `loan_id`),
+> sedangkan "telat tidaknya" barulah terlihat lewat tabel `returns`
+> (perbandingan `returns.return_date` vs `loans.due_date`). Struktur ini
+> disesuaikan dengan struktur nyata di phpMyAdmin. Screenshot Designer
+> phpMyAdmin yang menampilkan `loans.loan_id` adalah tampilan lama yang belum
+> di-refresh — kolom di database sekarang bernama `loans_id` dan `loans`
+> sudah memiliki kolom `processed_by`.
