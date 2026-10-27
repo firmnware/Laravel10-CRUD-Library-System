@@ -14,19 +14,11 @@ class LoanController extends Controller
 {
     public function index(Request $request)
     {
-        // loanReturn.admin = admin yang memproses pengembalian (nested),
-        // processedBy = admin yang meminjamkan (membuat) peminjaman ini.
-        $query = Loan::with(['user', 'book', 'penalty', 'processedBy', 'loanReturn.admin']);
-
-        // Filter berdasarkan status (overdue = virtual: borrowed + lewat jatuh tempo)
-        if ($request->filled('status')) {
-            if ($request->status === 'overdue') {
-                $query->where('status', 'borrowed')
-                    ->whereDate('due_date', '<', today());
-            } elseif (in_array($request->status, ['borrowed', 'returned'])) {
-                $query->where('status', $request->status);
-            }
-        }
+        // Daftar peminjaman HANYA berisi transaksi yang belum dikembalikan.
+        // Riwayat pengembalian punya halamannya sendiri (admin.returns.index)
+        // supaya satu transaksi tidak tampil di dua tabel sekaligus.
+        $query = Loan::with(['user', 'book', 'penalty', 'processedBy'])
+            ->where('status', 'borrowed');
 
         // Search: kode peminjaman, kode member, nama/email/no. HP member, judul buku
         if ($request->filled('search')) {
