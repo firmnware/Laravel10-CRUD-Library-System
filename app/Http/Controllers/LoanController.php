@@ -97,11 +97,7 @@ class LoanController extends Controller
         }
 
         if (! $member->canBorrow()) {
-<<<<<<< HEAD
-            return back()->with('error', 'Member tidak dapat meminjam (maksimal '.config('perpustakaan.max_active_borrows').' buku atau status tidak aktif)');
-=======
             return back()->with('error', 'Member tidak dapat meminjam (maksimal '.config('perpustakaan.max_active_borrows').' buku, status tidak aktif, atau memiliki pinjaman terlambat)');
->>>>>>> indra/main
         }
 
         if ($member->hasUnpaidPenalties()) {

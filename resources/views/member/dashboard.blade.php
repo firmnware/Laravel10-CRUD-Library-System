@@ -33,9 +33,6 @@
         <div class="card bg-danger text-white">
             <div class="card-body">
                 <h5>Total Denda</h5>
-<<<<<<< HEAD
-                <h4>Rp {{ number_format($unpaidPenalty ?? 0, 0, ',', '.') }}</h4>
-=======
                 <h4>Rp {{ number_format(($unpaidPenalty ?? 0) + ($runningPenalty ?? 0), 0, ',', '.') }}</h4>
                 @if(($runningPenalty ?? 0) > 0)
                     <small>
@@ -43,7 +40,6 @@
                         Rp {{ number_format($runningPenalty, 0, ',', '.') }}
                     </small>
                 @endif
->>>>>>> indra/main
             </div>
         </div>
     </div>

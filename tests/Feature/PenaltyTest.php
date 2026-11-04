@@ -128,8 +128,6 @@ class PenaltyTest extends TestCase
             ->assertOk()
             ->assertViewHas('unpaidPenalty', 6000);
     }
-<<<<<<< HEAD
-=======
 
     public function test_admin_penalty_index_does_not_show_running_fine(): void
     {
@@ -175,5 +173,4 @@ class PenaltyTest extends TestCase
             ->assertViewHas('runningPenalty', 6000)
             ->assertViewHas('unpaidPenalty', 0);
     }
->>>>>>> indra/main
 }

@@ -56,8 +56,6 @@
         @else
             <p class="text-muted">Tidak ada denda</p>
         @endif
-<<<<<<< HEAD
-=======
 
         <hr class="my-4">
 
@@ -103,7 +101,6 @@
         @else
             <p class="text-muted">Tidak ada denda berjalan.</p>
         @endif
->>>>>>> indra/main
     </div>
 </div>
 @endsection

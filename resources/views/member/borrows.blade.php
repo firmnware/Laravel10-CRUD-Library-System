@@ -17,11 +17,8 @@
                             <th>Buku</th>
                             <th>Tgl Pinjam</th>
                             <th>Jatuh Tempo</th>
-<<<<<<< HEAD
-=======
                             <th>Terlambat</th>
                             <th>Denda / Estimasi</th>
->>>>>>> indra/main
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -31,9 +28,6 @@
                             <td>{{ $borrow->loan_code }}</td>
                             <td>{{ $borrow->book->title ?? '-' }}</td>
                             <td>{{ $borrow->borrow_date?->format('d/m/Y') ?? '-' }}</td>
-<<<<<<< HEAD
-                            <td>{{ $borrow->due_date?->format('d/m/Y') ?? '-' }}</td>
-=======
                             <td class="{{ $borrow->due_date && $borrow->due_date->isPast() && $borrow->status === 'borrowed' ? 'text-danger fw-bold' : '' }}">
                                 {{ $borrow->due_date?->format('d/m/Y') ?? '-' }}
                             </td>
@@ -67,7 +61,6 @@
                                     @endif
                                 @endif
                             </td>
->>>>>>> indra/main
                             <td>
                                 @if($borrow->status == 'borrowed')
                                     <span class="badge bg-warning">Dipinjam</span>

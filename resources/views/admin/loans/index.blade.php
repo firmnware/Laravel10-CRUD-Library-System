@@ -169,11 +169,7 @@
                                         Denda {{ number_format($fineAmount, 0, ',', '.') }}
                                     </span>
                                     <div class="small text-warning">
-<<<<<<< HEAD
-                                        Belum dicatat
-=======
                                         Denda berjalan
->>>>>>> indra/main
                                     </div>
                                 @else
                                     <span class="text-muted">-</span>

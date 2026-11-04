@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 # UML — Sistem Perpustakaan
->>>>>>> indra/main
 
 Sumber kebenaran: `app/Models/*.php`, `database/migrations/*_create_*.php`,
 `routes/web.php`, `app/Http/Controllers/*.php`.
@@ -57,8 +54,6 @@ menampilkan proses yang rinci: halaman, sistem, data terkait, dan database.
 | `member/03-riwayat-peminjaman` | Melihat riwayat peminjaman milik sendiri beserta status dan denda |
 | `member/04-status-denda` | Melihat total denda yang belum dibayar dan daftar denda milik sendiri |
 
-<<<<<<< HEAD
-=======
 ## Activity Diagram
 
 Activity diagram per aksi ada di folder `activity/`, dipisahkan menjadi `umum/`,
@@ -77,7 +72,6 @@ dalam `.puml` (sumber), `.png`, dan `.svg`.
 
 Rincian tiap diagram ada di `activity/README.md`.
 
->>>>>>> indra/main
 ## Render ulang
 
 Dengan PlantUML lokal:
@@ -89,13 +83,10 @@ java -jar plantuml.jar -tsvg class-diagram.puml
 cd sequence
 java -jar plantuml.jar -tpng admin/*.puml member/*.puml
 java -jar plantuml.jar -tsvg admin/*.puml member/*.puml
-<<<<<<< HEAD
-=======
 
 cd ../activity
 java -jar plantuml.jar -tpng umum/*.puml admin/*.puml member/*.puml
 java -jar plantuml.jar -tsvg umum/*.puml admin/*.puml member/*.puml
->>>>>>> indra/main
 ```
 
 Atau buka file `.puml` dengan ekstensi PlantUML di VS Code, lalu export PNG/SVG.
