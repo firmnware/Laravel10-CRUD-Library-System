@@ -93,6 +93,23 @@ class LoanBorrowTest extends TestCase
         $this->assertDatabaseMissing('loans', ['book_id' => $book->getKey()]);
     }
 
+<<<<<<< HEAD
+=======
+    public function test_member_with_overdue_loan_cannot_borrow(): void
+    {
+        $member = User::factory()->create();
+        // Pinjaman aktif yang sudah lewat jatuh tempo (belum dikembalikan).
+        Loan::factory()->for($member)->overdue()->create();
+        $book = Book::factory()->create();
+
+        $response = $this->borrow($member, $book);
+
+        $response->assertSessionHas('error', fn ($message) => str_contains($message, 'pinjaman terlambat'));
+        $this->assertDatabaseMissing('loans', ['book_id' => $book->getKey()]);
+        $this->assertSame(1, $member->getActiveBorrowsCount());
+    }
+
+>>>>>>> indra/main
     public function test_borrow_rejected_when_no_stock_available(): void
     {
         $member = User::factory()->create();

@@ -69,10 +69,26 @@ class User extends Authenticatable
         return $this->loans()->where('status', 'borrowed')->count();
     }
 
+<<<<<<< HEAD
     public function canBorrow()
     {
         return $this->status === 'active'
             && $this->getActiveBorrowsCount() < config('perpustakaan.max_active_borrows');
+=======
+    public function hasOverdueLoans()
+    {
+        return $this->loans()
+            ->where('status', 'borrowed')
+            ->whereDate('due_date', '<', today())
+            ->exists();
+    }
+
+    public function canBorrow()
+    {
+        return $this->status === 'active'
+            && $this->getActiveBorrowsCount() < config('perpustakaan.max_active_borrows')
+            && ! $this->hasOverdueLoans();
+>>>>>>> indra/main
     }
 
     public function hasUnpaidPenalties()

@@ -113,11 +113,24 @@ class SmokeTest extends TestCase
         // C0: public/storage harus menunjuk ke storage/app/public proyek ini.
         $link = public_path('storage');
 
+<<<<<<< HEAD
         $this->assertTrue(is_link($link), 'public/storage harus berupa symlink');
         $this->assertSame(
             realpath(storage_path('app/public')),
             realpath($link),
             'symlink harus menunjuk ke storage/app/public proyek ini'
+=======
+        // Windows membuat junction saat symlink tidak diizinkan; PHP kadang
+        // melaporkan junction sebagai bukan is_link()/is_dir(). Yang penting
+        // adalah path ini benar-benar menunjuk ke storage/app/public.
+        $target = realpath(storage_path('app/public'));
+
+        $this->assertNotFalse(realpath($link), 'public/storage harus ada');
+        $this->assertSame(
+            $target,
+            realpath($link),
+            'symlink/junction harus menunjuk ke storage/app/public proyek ini'
+>>>>>>> indra/main
         );
 
         // 153 cover bawaan seeder harus terjangkau lewat link itu.

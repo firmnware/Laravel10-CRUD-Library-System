@@ -128,4 +128,52 @@ class PenaltyTest extends TestCase
             ->assertOk()
             ->assertViewHas('unpaidPenalty', 6000);
     }
+<<<<<<< HEAD
+=======
+
+    public function test_admin_penalty_index_does_not_show_running_fine(): void
+    {
+        // Admin hanya melihat denda final yang sudah tercatat.
+        $loan = Loan::factory()->overdue()->create();
+
+        $this->actingAs($this->admin)
+            ->get('/admin/penalties')
+            ->assertOk()
+            ->assertViewHas('totalUnpaid', 0)
+            ->assertViewMissing('totalRunning')
+            ->assertViewMissing('runningLoans')
+            ->assertDontSee('Denda Berjalan')
+            ->assertDontSee($loan->loan_code);
+
+        $this->assertDatabaseCount('penalties', 0);
+    }
+
+    public function test_member_penalty_page_shows_only_own_running_fine(): void
+    {
+        $member = User::factory()->create();
+        $mine = Loan::factory()->for($member)->overdue()->create();
+        $other = Loan::factory()->overdue()->create();
+
+        $response = $this->actingAs($member)->get('/member/my-penalties');
+
+        $response->assertOk()
+            ->assertViewHas('totalRunning', 6000)
+            ->assertViewHas('runningLoans', fn ($loans) => $loans->count() === 1
+                && $loans->first()->getKey() === $mine->getKey())
+            ->assertSee($mine->book->title)
+            ->assertDontSee($other->book->title);
+    }
+
+    public function test_member_dashboard_includes_running_fine(): void
+    {
+        $member = User::factory()->create();
+        Loan::factory()->for($member)->overdue()->create();
+
+        $this->actingAs($member)
+            ->get('/member/dashboard')
+            ->assertOk()
+            ->assertViewHas('runningPenalty', 6000)
+            ->assertViewHas('unpaidPenalty', 0);
+    }
+>>>>>>> indra/main
 }

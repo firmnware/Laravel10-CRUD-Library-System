@@ -56,6 +56,54 @@
         @else
             <p class="text-muted">Tidak ada denda</p>
         @endif
+<<<<<<< HEAD
+=======
+
+        <hr class="my-4">
+
+        <h5 class="mb-3">
+            <i class="fas fa-hourglass-half me-2 text-secondary"></i>
+            Denda Berjalan
+        </h5>
+
+        @if(($runningLoans ?? collect())->count() > 0)
+            <div class="alert alert-warning">
+                <h5 class="mb-0">
+                    Estimasi Denda Berjalan:
+                    <strong>Rp {{ number_format($totalRunning, 0, ',', '.') }}</strong>
+                </h5>
+                <small>Denda ini masih bertambah dan baru bisa dibayar setelah buku dikembalikan.</small>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Buku</th>
+                            <th>Jatuh Tempo</th>
+                            <th>Terlambat</th>
+                            <th>Estimasi Denda</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($runningLoans as $loan)
+                        <tr>
+                            <td>{{ $loan->book->title ?? '-' }}</td>
+                            <td>{{ $loan->due_date?->format('d/m/Y') ?? '-' }}</td>
+                            <td class="text-danger">{{ $loan->late_days }} hari</td>
+                            <td class="text-danger">
+                                Rp {{ number_format($loan->late_days * $finePerDay, 0, ',', '.') }}
+                            </td>
+                            <td><span class="badge bg-warning text-dark">Menunggu pengembalian</span></td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @else
+            <p class="text-muted">Tidak ada denda berjalan.</p>
+        @endif
+>>>>>>> indra/main
     </div>
 </div>
 @endsection

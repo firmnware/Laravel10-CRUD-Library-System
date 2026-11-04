@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+# UML — Sistem Perpustakaan
+>>>>>>> indra/main
 
 Sumber kebenaran: `app/Models/*.php`, `database/migrations/*_create_*.php`,
 `routes/web.php`, `app/Http/Controllers/*.php`.
@@ -53,6 +57,27 @@ menampilkan proses yang rinci: halaman, sistem, data terkait, dan database.
 | `member/03-riwayat-peminjaman` | Melihat riwayat peminjaman milik sendiri beserta status dan denda |
 | `member/04-status-denda` | Melihat total denda yang belum dibayar dan daftar denda milik sendiri |
 
+<<<<<<< HEAD
+=======
+## Activity Diagram
+
+Activity diagram per aksi ada di folder `activity/`, dipisahkan menjadi `umum/`,
+`admin/`, dan `member/`. Setiap aksi memiliki satu file sendiri, misalnya
+peminjaman (`admin/11-peminjaman-buku`) dan pengembalian
+(`admin/14-pengembalian-buku`) tidak digabung dalam satu diagram.
+
+Semua diagram memakai swimlane aktor, `Sistem`, dan `Database`, lalu tersedia
+dalam `.puml` (sumber), `.png`, dan `.svg`.
+
+| Kelompok | Jumlah | Cakupan |
+|---|---|---|
+| `umum/` | 7 | Login, registrasi, logout, lupa/reset password, update profil, ubah password |
+| `admin/` | 16 | Dashboard, kelola buku, kelola member, peminjaman, pengembalian, denda |
+| `member/` | 5 | Dashboard, katalog, detail buku, riwayat peminjaman, status denda |
+
+Rincian tiap diagram ada di `activity/README.md`.
+
+>>>>>>> indra/main
 ## Render ulang
 
 Dengan PlantUML lokal:
@@ -64,6 +89,13 @@ java -jar plantuml.jar -tsvg class-diagram.puml
 cd sequence
 java -jar plantuml.jar -tpng admin/*.puml member/*.puml
 java -jar plantuml.jar -tsvg admin/*.puml member/*.puml
+<<<<<<< HEAD
+=======
+
+cd ../activity
+java -jar plantuml.jar -tpng umum/*.puml admin/*.puml member/*.puml
+java -jar plantuml.jar -tsvg umum/*.puml admin/*.puml member/*.puml
+>>>>>>> indra/main
 ```
 
 Atau buka file `.puml` dengan ekstensi PlantUML di VS Code, lalu export PNG/SVG.
